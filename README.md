@@ -36,3 +36,20 @@ uvicorn main:app --reload
 ```
 
 The service will be available at `http://localhost:8000`. Health check: `GET /health`.
+
+## Running the tests
+
+```bash
+cd service
+source .venv/bin/activate
+python -m pytest test/ -v
+```
+
+If you haven't set up the virtual environment yet, do so first:
+
+```bash
+cd service
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```

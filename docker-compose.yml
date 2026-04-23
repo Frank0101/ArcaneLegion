@@ -1,4 +1,10 @@
 services:
+  test:
+    build: ./service
+    container_name: arcane-legion-test
+    command: ["python", "-m", "pytest", "test/", "-v"]
+    restart: "no"
+
   service:
     build: ./service
     container_name: arcane-legion-service
@@ -7,3 +13,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    depends_on:
+      test:
+        condition: service_completed_successfully
