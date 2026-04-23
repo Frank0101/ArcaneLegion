@@ -1,5 +1,17 @@
 # ArcaneLegion
 
+## Table of Contents
+
+- [Running the service](#running-the-service)
+  - [Docker Compose setup](#docker-compose-setup)
+  - [Locally (without Docker)](#locally-without-docker)
+- [Running the tests](#running-the-tests)
+- [API Documentation](#api-documentation)
+- [Database](#database)
+  - [Inspecting PostgreSQL locally](#inspecting-postgresql-locally)
+  - [Generating a new migration](#generating-a-new-migration)
+  - [Running migrations manually](#running-migrations-manually)
+
 ## Running the service
 
 ### Docker Compose setup
@@ -17,7 +29,7 @@ docker compose up --build
 
 This starts the following services:
 - **postgres** — PostgreSQL 16 on port `5432`
-- **migrate** — runs `alembic upgrade head` on startup, then exits
+- **migrate** — runs `python -m alembic upgrade head` on startup, then exits
 - **test** — runs the test suite, then exits (service only starts if tests pass)
 - **service** — FastAPI on port `8000` (starts only after migrations and tests succeed)
 
@@ -33,12 +45,10 @@ Runs only the base config — no volume mount, no `--reload`.
 
 ### Locally (without Docker)
 
+Unlike Docker Compose, running locally does not automatically start PostgreSQL or run migrations. Use the provided script which handles everything in sequence:
+
 ```bash
-cd service
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload
+./dev-start.sh
 ```
 
 The service will be available at `http://localhost:8000`. Health check: `GET /health`.
@@ -69,20 +79,6 @@ FastAPI automatically generates interactive docs. Once the service is running:
 
 ## Database
 
-### Running migrations manually
-
-Migrations run automatically on `docker compose up` via the `migrate` service. To run them manually:
-
-```bash
-docker compose run --rm migrate
-```
-
-Or directly from `service/` (with `DATABASE_URL` set):
-
-```bash
-alembic upgrade head
-```
-
 ### Inspecting PostgreSQL locally
 
 PostgreSQL is exposed on port `5432`. Connect via psql inside the container:
@@ -103,4 +99,28 @@ Useful psql commands:
 \dt          -- list all tables
 \d <table>   -- describe a table schema
 \q           -- quit
+```
+
+### Generating a new migration
+
+After adding or modifying a model in `data/models/`, generate a migration from `service/` with `DATABASE_URL` set:
+
+```bash
+python -m alembic revision --autogenerate -m "short description of change"
+```
+
+Alembic will compare the current models against the database schema and write a new migration file to `data/infra/alembic/versions/`. Review the generated file before applying it.
+
+### Running migrations manually
+
+Migrations run automatically on `docker compose up` via the `migrate` service. To run them manually:
+
+```bash
+docker compose run --rm migrate
+```
+
+Or directly from `service/` (with `DATABASE_URL` set):
+
+```bash
+python -m alembic upgrade head
 ```
