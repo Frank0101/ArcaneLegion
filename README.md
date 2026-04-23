@@ -29,7 +29,7 @@ Runs only the base config — no volume mount, no `--reload`.
 
 ```bash
 cd service
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
@@ -49,7 +49,7 @@ If you haven't set up the virtual environment yet, do so first:
 
 ```bash
 cd service
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```

@@ -1,8 +1,40 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: arcane-legion-postgres
+    environment:
+      - POSTGRES_USER=arcane
+      - POSTGRES_PASSWORD=arcane
+      - POSTGRES_DB=arcane_legion
+    volumes:
+      - arcane_legion_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arcane -d arcane_legion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  migrate:
+    build: ./service
+    container_name: arcane-legion-migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   test:
     build: ./service
     container_name: arcane-legion-test
     command: ["python", "-m", "pytest", "test/", "-v"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: "no"
 
   service:
@@ -12,7 +44,13 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-    restart: unless-stopped
+      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       test:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  arcane_legion_postgres_data:

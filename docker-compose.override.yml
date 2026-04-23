@@ -1,4 +1,8 @@
 services:
+  migrate:
+    volumes:
+      - ./service:/app
+
   test:
     volumes:
       - ./service:/app
