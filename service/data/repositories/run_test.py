@@ -164,9 +164,12 @@ def test_delete_ignores_missing_run(repo: RunRepository) -> None:
     repo.delete(uuid4())
 
 
-def test_claim_oldest_queued_returns_none_when_no_queued_runs(repo: RunRepository, session: Session) -> None:
+@pytest.mark.parametrize("status", [RunStatus.running, RunStatus.completed, RunStatus.failed])
+def test_claim_oldest_queued_returns_none_for_non_queued(
+        repo: RunRepository, session: Session, status: RunStatus
+) -> None:
     project_id = add_project(session)
-    repo.create(make_run(project_id=project_id, status=RunStatus.running))
+    repo.create(make_run(project_id=project_id, status=status))
 
     assert repo.claim_oldest_queued() is None
 
@@ -182,12 +185,3 @@ def test_claim_oldest_queued_returns_oldest_queued_run(repo: RunRepository, sess
 
     assert result is not None
     assert result.id == older.id
-
-
-def test_claim_oldest_queued_ignores_non_queued_runs(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    repo.create(make_run(project_id=project_id, status=RunStatus.running))
-    repo.create(make_run(project_id=project_id, status=RunStatus.completed))
-    repo.create(make_run(project_id=project_id, status=RunStatus.failed))
-
-    assert repo.claim_oldest_queued() is None

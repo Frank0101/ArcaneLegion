@@ -11,8 +11,6 @@ from domain.run.repository import AbstractRunRepository
 from domain.run.service import RunService
 from main import app
 
-_CREATED_AT = datetime(2026, 1, 1, 0, 0, 0)
-
 
 def _make_run(**kwargs: object) -> Run:
     defaults: dict[str, object] = {
@@ -21,7 +19,7 @@ def _make_run(**kwargs: object) -> Run:
         "title": "Test Run",
         "description": "A test run",
         "status": RunStatus.queued,
-        "created_at": _CREATED_AT,
+        "created_at": datetime(2026, 1, 1, 0, 0, 0),
         "started_at": None,
         "completed_at": None,
         "error_message": None,
@@ -104,14 +102,9 @@ def test_get_run_returns_404_when_not_found(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_create_run_returns_201(client: TestClient) -> None:
-    response = client.post("/runs/", json=_run_body())
+def test_create_run(client: TestClient) -> None:
+    response = client.post("/runs/", json=_run_body(title="My Run"))
     assert response.status_code == 201
-
-
-def test_create_run_returns_run(client: TestClient) -> None:
-    body = _run_body(title="My Run")
-    response = client.post("/runs/", json=body)
     data = response.json()
     assert data["title"] == "My Run"
     assert data["status"] == RunStatus.queued

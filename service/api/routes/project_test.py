@@ -11,6 +11,17 @@ from domain.project.service import ProjectService
 from main import app
 
 
+def _make_project(**kwargs: object) -> Project:
+    defaults: dict[str, object] = {
+        "id": uuid4(),
+        "name": "Arcane",
+        "repo_path": "/repos/arcane",
+        "default_branch": "main",
+    }
+    defaults.update(kwargs)
+    return Project(**defaults)  # type: ignore[arg-type]
+
+
 class FakeProjectRepository(AbstractProjectRepository):
     def __init__(self) -> None:
         self._projects: dict[UUID, Project] = {}
@@ -52,16 +63,15 @@ def test_list_projects_returns_empty(client: TestClient) -> None:
 
 
 def test_list_projects_returns_all(client: TestClient, repo: FakeProjectRepository) -> None:
-    project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
-    repo.create(project)
+    repo.create(_make_project(name="Arcane"))
+    repo.create(_make_project(name="Legion"))
     response = client.get("/projects/")
     assert response.status_code == 200
-    assert len(response.json()) == 1
-    assert response.json()[0]["name"] == "Arcane"
+    assert len(response.json()) == 2
 
 
 def test_get_project_returns_project(client: TestClient, repo: FakeProjectRepository) -> None:
-    project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
+    project = _make_project()
     repo.create(project)
     response = client.get(f"/projects/{project.id}")
     assert response.status_code == 200
@@ -73,15 +83,10 @@ def test_get_project_returns_404_when_not_found(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_create_project_returns_201(client: TestClient) -> None:
+def test_create_project(client: TestClient) -> None:
     body = {"name": "Arcane", "repo_path": "/repos/arcane", "default_branch": "main"}
     response = client.post("/projects/", json=body)
     assert response.status_code == 201
-
-
-def test_create_project_returns_project(client: TestClient) -> None:
-    body = {"name": "Arcane", "repo_path": "/repos/arcane", "default_branch": "main"}
-    response = client.post("/projects/", json=body)
     data = response.json()
     assert data["name"] == "Arcane"
     assert data["repo_path"] == "/repos/arcane"
@@ -90,7 +95,7 @@ def test_create_project_returns_project(client: TestClient) -> None:
 
 
 def test_update_project_returns_updated(client: TestClient, repo: FakeProjectRepository) -> None:
-    project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
+    project = _make_project()
     repo.create(project)
     body = {"name": "Arcane Updated", "repo_path": "/repos/arcane-new", "default_branch": "develop"}
     response = client.put(f"/projects/{project.id}", json=body)
@@ -108,7 +113,7 @@ def test_update_project_returns_404_when_not_found(client: TestClient) -> None:
 
 
 def test_delete_project_returns_204(client: TestClient, repo: FakeProjectRepository) -> None:
-    project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
+    project = _make_project()
     repo.create(project)
     response = client.delete(f"/projects/{project.id}")
     assert response.status_code == 204

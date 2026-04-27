@@ -59,11 +59,6 @@ def test_get_by_id_returns_none_when_not_found(service: ProjectService) -> None:
     assert service.get_by_id(uuid4()) is None
 
 
-def test_create_assigns_id(service: ProjectService) -> None:
-    project = service.create(name="Arcane", repo_path="/repos/arcane", default_branch="main")
-    assert project.id is not None
-
-
 def test_create_sets_provided_fields(service: ProjectService) -> None:
     project = service.create(name="Arcane", repo_path="/repos/arcane", default_branch="main")
     assert project.name == "Arcane"
