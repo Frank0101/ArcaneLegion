@@ -81,24 +81,19 @@ def test_tick_marks_run_running_then_completed(worker: RunWorker, repo: FakeRunR
     assert result.completed_at is not None
 
 
-def test_tick_marks_run_failed_when_execution_raises(repo: FakeRunRepository) -> None:
+class UpdateFailingOnCompletedRepository(FakeRunRepository):
+    def update(self, run: Run) -> Run:
+        if run.status == RunStatus.completed:
+            raise RuntimeError("execution failed")
+        return super().update(run)
+
+
+def test_tick_marks_run_failed_when_execution_raises() -> None:
+    repo = UpdateFailingOnCompletedRepository()
     run = _make_run()
     repo.create(run)
 
-    original_update = repo.update
-    call_count = 0
-
-    def update_raising_on_complete(r: Run) -> Run:
-        nonlocal call_count
-        call_count += 1
-        if r.status == RunStatus.completed:
-            raise RuntimeError("execution failed")
-        return original_update(r)
-
-    repo.update = update_raising_on_complete  # type: ignore[method-assign]
-    worker = RunWorker(repo, poll_interval=0)
-
-    worker._tick()
+    RunWorker(repo, poll_interval=0)._tick()
 
     result = repo.get_by_id(run.id)
     assert result is not None
