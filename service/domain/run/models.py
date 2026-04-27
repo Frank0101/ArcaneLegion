@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Callable, Optional
 from uuid import UUID
 
 
@@ -26,7 +26,27 @@ class Run:
 
 
 @dataclass
+class ActionResult:
+    output: str
+    success: Optional[bool] = None
+
+
+@dataclass
+class Agent:
+    name: str
+    action: Callable[[], ActionResult]
+    next: Optional["Agent"] = None
+
+
+@dataclass
 class ExecutionResult:
-    success: bool
-    summary: dict[str, object]
-    error_message: Optional[str]
+    action_results: dict[str, ActionResult]
+
+    @property
+    def success(self) -> bool:
+        return not any(r.success is False for r in self.action_results.values())
+
+    @property
+    def error_message(self) -> Optional[str]:
+        failures = [ar.output for ar in self.action_results.values() if ar.success is False]
+        return failures[0] if failures else None

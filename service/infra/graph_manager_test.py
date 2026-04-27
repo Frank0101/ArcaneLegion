@@ -1,8 +1,7 @@
 from datetime import datetime
-from unittest.mock import patch
 from uuid import uuid4
 
-from domain.run.models import Run, RunStatus
+from domain.run.models import ActionResult, Agent, Run, RunStatus
 from infra.graph_manager import LangGraphManager
 
 
@@ -22,32 +21,36 @@ def _make_run(**kwargs: object) -> Run:
     return Run(**defaults)  # type: ignore[arg-type]
 
 
-def test_execute_returns_success_with_structured_summary() -> None:
-    manager = LangGraphManager()
+def test_execute_collects_all_agent_outputs() -> None:
     run = _make_run(title="My Task")
+    agent = Agent(
+        name="coder",
+        action=lambda: ActionResult(output=f"Implemented fake task for run title '{run.title}'"),
+        next=Agent(
+            name="reviewer",
+            action=lambda: ActionResult(output="Approved fake implementation", success=True),
+        ),
+    )
 
-    result = manager.execute(run)
+    result = LangGraphManager().execute_graph(agent)
 
     assert result.success is True
-    assert result.error_message is None
-    assert result.summary["approved"] is True
-    assert result.summary["coder"] == "Implemented fake task for run title 'My Task'"
-    assert result.summary["reviewer"] == "Approved fake implementation"
+    assert result.action_results["coder"].output == "Implemented fake task for run title 'My Task'"
+    assert result.action_results["reviewer"].output == "Approved fake implementation"
+    assert result.action_results["reviewer"].success is True
 
 
-def test_execute_returns_failure_when_reviewer_rejects() -> None:
-    manager = LangGraphManager()
-    run = _make_run()
+def test_execute_not_approved_when_reviewer_rejects() -> None:
+    agent = Agent(
+        name="coder",
+        action=lambda: ActionResult(output="coded"),
+        next=Agent(
+            name="reviewer",
+            action=lambda: ActionResult(output="Rejected", success=False),
+        ),
+    )
 
-    with patch.object(manager, "_graph") as mock_graph:
-        mock_graph.invoke.return_value = {
-            "run": run,
-            "coder_output": "some output",
-            "reviewer_output": "Rejected",
-            "approved": False,
-        }
-        result = manager.execute(run)
+    result = LangGraphManager().execute_graph(agent)
 
     assert result.success is False
-    assert result.error_message == "Reviewer did not approve"
-    assert result.summary["approved"] is False
+    assert result.action_results["reviewer"].output == "Rejected"

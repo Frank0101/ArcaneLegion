@@ -1,59 +1,40 @@
-from typing import TypedDict, cast
+from typing import Callable, Optional, TypedDict, cast
 
 from langgraph.graph import END, StateGraph
 
 from domain.run.graph_manager import AbstractGraphManager
-from domain.run.models import ExecutionResult, Run
+from domain.run.models import ActionResult, Agent, ExecutionResult
 
 
-class _GraphState(TypedDict):
-    run: Run
-    coder_output: str
-    reviewer_output: str
-    approved: bool
+class _ExecutionState(TypedDict):
+    action_results: dict[str, ActionResult]
 
 
-def _coder_node(state: _GraphState) -> dict[str, object]:
-    return {"coder_output": f"Implemented fake task for run title '{state['run'].title}'"}
+def _wrap(agent: Agent) -> Callable[[_ExecutionState], dict[str, object]]:
+    def node(state: _ExecutionState) -> dict[str, object]:
+        result = agent.action()
+        return {"action_results": {**state["action_results"], agent.name: result}}
 
-
-def _reviewer_node(state: _GraphState) -> dict[str, object]:
-    return {"reviewer_output": "Approved fake implementation", "approved": True}
+    return node
 
 
 class LangGraphManager(AbstractGraphManager):
-    def __init__(self) -> None:
-        builder: StateGraph = StateGraph(_GraphState)
-        builder.add_node("coder", _coder_node)
-        builder.add_node("reviewer", _reviewer_node)
-        builder.set_entry_point("coder")
-        builder.add_edge("coder", "reviewer")
-        builder.add_edge("reviewer", END)
-        self._graph = builder.compile()
-
-    def execute(self, run: Run) -> ExecutionResult:
-        final_state = cast(_GraphState, self._graph.invoke({
-            "run": run,
-            "coder_output": "",
-            "reviewer_output": "",
-            "approved": False
-        }))
-        if final_state["approved"]:
-            return ExecutionResult(
-                success=True,
-                summary={
-                    "coder": final_state["coder_output"],
-                    "reviewer": final_state["reviewer_output"],
-                    "approved": True,
-                },
-                error_message=None,
-            )
-        return ExecutionResult(
-            success=False,
-            summary={
-                "coder": final_state["coder_output"],
-                "reviewer": final_state["reviewer_output"],
-                "approved": False,
-            },
-            error_message="Reviewer did not approve",
+    def execute_graph(self, agent: Agent) -> ExecutionResult:
+        builder: StateGraph = StateGraph(_ExecutionState)
+        current: Optional[Agent] = agent
+        prev_name: Optional[str] = None
+        while current is not None:
+            builder.add_node(current.name, _wrap(current))
+            if prev_name is None:
+                builder.set_entry_point(current.name)
+            else:
+                builder.add_edge(prev_name, current.name)
+            prev_name = current.name
+            current = current.next
+        if prev_name is not None:
+            builder.add_edge(prev_name, END)
+        final = cast(
+            _ExecutionState,
+            builder.compile().invoke({"action_results": {}}),
         )
+        return ExecutionResult(action_results=final["action_results"])
