@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 from api.schemas.run import RunResponse, RunRequest
 from data.repositories.run import RunRepository
 from data.session import create_session
-from domain.run.models import Run
+from domain.run.models import Run, RunStatus
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -44,11 +45,11 @@ def create_run(body: RunRequest, repo: RunRepository = Depends(get_repository)) 
         project_id=body.project_id,
         title=body.title,
         description=body.description,
-        status=body.status,
-        created_at=body.created_at,
-        started_at=body.started_at,
-        completed_at=body.completed_at,
-        error_message=body.error_message,
+        status=RunStatus.queued,
+        created_at=datetime.now(timezone.utc),
+        started_at=None,
+        completed_at=None,
+        error_message=None,
     ))
     return RunResponse.model_validate(run)
 
@@ -67,11 +68,11 @@ def update_run(
         project_id=body.project_id,
         title=body.title,
         description=body.description,
-        status=body.status,
-        created_at=body.created_at,
-        started_at=body.started_at,
-        completed_at=body.completed_at,
-        error_message=body.error_message,
+        status=existing.status,
+        created_at=existing.created_at,
+        started_at=existing.started_at,
+        completed_at=existing.completed_at,
+        error_message=existing.error_message,
     ))
     return RunResponse.model_validate(updated)
 

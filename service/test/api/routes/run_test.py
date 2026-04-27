@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.routes.run import get_repository
-from domain.run.models import Run
+from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 from main import app
 
@@ -19,7 +19,7 @@ def _make_run(**kwargs: object) -> Run:
         "project_id": uuid4(),
         "title": "Test Run",
         "description": "A test run",
-        "status": "pending",
+        "status": RunStatus.queued,
         "created_at": _CREATED_AT,
         "started_at": None,
         "completed_at": None,
@@ -34,11 +34,6 @@ def _run_body(**kwargs: object) -> dict[str, object]:
         "project_id": str(uuid4()),
         "title": "Test Run",
         "description": "A test run",
-        "status": "pending",
-        "created_at": _CREATED_AT.isoformat(),
-        "started_at": None,
-        "completed_at": None,
-        "error_message": None,
     }
     defaults.update(kwargs)
     return defaults
@@ -111,39 +106,25 @@ def test_create_run_returns_201(client: TestClient) -> None:
 
 
 def test_create_run_returns_run(client: TestClient) -> None:
-    body = _run_body(title="My Run", status="running")
+    body = _run_body(title="My Run")
     response = client.post("/runs/", json=body)
     data = response.json()
     assert data["title"] == "My Run"
-    assert data["status"] == "running"
+    assert data["status"] == RunStatus.queued
     assert data["started_at"] is None
     assert data["error_message"] is None
     assert "id" in data
 
 
-def test_create_run_with_optional_fields(client: TestClient) -> None:
-    body = _run_body(
-        started_at="2026-01-01T10:00:00",
-        completed_at="2026-01-01T11:00:00",
-        error_message="something failed",
-    )
-    response = client.post("/runs/", json=body)
-    assert response.status_code == 201
-    data = response.json()
-    assert data["started_at"] is not None
-    assert data["completed_at"] is not None
-    assert data["error_message"] == "something failed"
-
-
 def test_update_run_returns_updated(client: TestClient, repo: FakeRunRepository) -> None:
-    run = _make_run(title="Old Title", status="pending")
+    run = _make_run(title="Old Title", status=RunStatus.running)
     repo.create(run)
-    body = _run_body(project_id=str(run.project_id), title="New Title", status="completed")
+    body = _run_body(project_id=str(run.project_id), title="New Title")
     response = client.put(f"/runs/{run.id}", json=body)
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "New Title"
-    assert data["status"] == "completed"
+    assert data["status"] == RunStatus.running
 
 
 def test_update_run_returns_404_when_not_found(client: TestClient) -> None:
