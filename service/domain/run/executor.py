@@ -7,6 +7,9 @@ class RunExecutor:
         self._graph_manager = graph_manager
 
     def execute(self, run: Run) -> ExecutionResult:
+        def planner_action() -> ActionResult:
+            return ActionResult(output=f"Planned task for run title '{run.title}'")
+
         def coder_action() -> ActionResult:
             return ActionResult(output=f"Implemented fake task for run title '{run.title}'")
 
@@ -14,10 +17,14 @@ class RunExecutor:
             return ActionResult(output="Approved fake implementation", approved=True)
 
         return self._graph_manager.execute_graph(Agent(
-            name="coder",
-            action=coder_action,
+            name="planner",
+            action=planner_action,
             next=Agent(
-                name="reviewer",
-                action=reviewer_action
+                name="coder",
+                action=coder_action,
+                next=Agent(
+                    name="reviewer",
+                    action=reviewer_action,
+                )
             )
         ))

@@ -15,16 +15,18 @@ class _CapturingGraphManager(AbstractGraphManager):
         return self._result
 
 
-def test_execute_passes_coder_reviewer_chain_to_graph_manager(make_run: Callable[..., Run]) -> None:
+def test_execute_passes_planner_coder_reviewer_chain_to_graph_manager(make_run: Callable[..., Run]) -> None:
     manager = _CapturingGraphManager(ExecutionResult(action_results={}))
 
     RunExecutor(manager).execute(make_run())
 
     assert manager.received_agent is not None
-    assert manager.received_agent.name == "coder"
+    assert manager.received_agent.name == "planner"
     assert manager.received_agent.next is not None
-    assert manager.received_agent.next.name == "reviewer"
-    assert manager.received_agent.next.next is None
+    assert manager.received_agent.next.name == "coder"
+    assert manager.received_agent.next.next is not None
+    assert manager.received_agent.next.next.name == "reviewer"
+    assert manager.received_agent.next.next.next is None
 
 
 def test_execute_returns_graph_manager_result(make_run: Callable[..., Run]) -> None:
