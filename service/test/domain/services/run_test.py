@@ -29,6 +29,9 @@ class FakeRunRepository(AbstractRunRepository):
     def delete(self, run_id: UUID) -> None:
         self._runs.pop(run_id, None)
 
+    def claim_oldest_queued(self) -> Run | None:
+        raise NotImplementedError
+
 
 def _make_run(**kwargs: object) -> Run:
     defaults: dict[str, object] = {

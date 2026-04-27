@@ -72,3 +72,14 @@ class RunRepository(AbstractRunRepository):
         if row is not None:
             self._session.delete(row)
             self._session.commit()
+
+    def claim_oldest_queued(self) -> Run | None:
+        from domain.run.models import RunStatus
+        row = (
+            self._session.query(RunRow)
+            .filter(RunRow.status == RunStatus.queued)
+            .order_by(RunRow.created_at.asc())
+            .with_for_update(skip_locked=True)
+            .first()
+        )
+        return _to_domain(row) if row else None

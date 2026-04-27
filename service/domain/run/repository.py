@@ -19,3 +19,6 @@ class AbstractRunRepository(ABC):
 
     @abstractmethod
     def delete(self, run_id: UUID) -> None: ...
+
+    @abstractmethod
+    def claim_oldest_queued(self) -> Run | None: ...
