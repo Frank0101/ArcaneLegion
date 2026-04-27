@@ -115,31 +115,3 @@ def test_create_run_returns_run(client: TestClient) -> None:
     assert data["started_at"] is None
     assert data["error_message"] is None
     assert "id" in data
-
-
-def test_update_run_returns_updated(client: TestClient, repo: FakeRunRepository) -> None:
-    run = _make_run(title="Old Title", status=RunStatus.running)
-    repo.create(run)
-    body = _run_body(project_id=str(run.project_id), title="New Title")
-    response = client.put(f"/runs/{run.id}", json=body)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["title"] == "New Title"
-    assert data["status"] == RunStatus.running
-
-
-def test_update_run_returns_404_when_not_found(client: TestClient) -> None:
-    response = client.put(f"/runs/{uuid4()}", json=_run_body())
-    assert response.status_code == 404
-
-
-def test_delete_run_returns_204(client: TestClient, repo: FakeRunRepository) -> None:
-    run = _make_run()
-    repo.create(run)
-    response = client.delete(f"/runs/{run.id}")
-    assert response.status_code == 204
-
-
-def test_delete_run_returns_404_when_not_found(client: TestClient) -> None:
-    response = client.delete(f"/runs/{uuid4()}")
-    assert response.status_code == 404

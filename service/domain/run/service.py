@@ -27,14 +27,3 @@ class RunService:
             completed_at=None,
             error_message=None,
         ))
-
-    def update(self, run: Run) -> Run | None:
-        if self._repo.get_by_id(run.id) is None:
-            return None
-        return self._repo.update(run)
-
-    def delete(self, run_id: UUID) -> bool:
-        if self._repo.get_by_id(run_id) is None:
-            return False
-        self._repo.delete(run_id)
-        return True
