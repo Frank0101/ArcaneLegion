@@ -58,7 +58,7 @@ The service will be available at `http://localhost:8000`. Health check: `GET /he
 ```bash
 cd service
 source .venv/bin/activate
-python -m pytest test/ -v
+python -m pytest . -v
 ```
 
 If you haven't set up the virtual environment yet, do so first:

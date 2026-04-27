@@ -31,7 +31,7 @@ services:
   test:
     build: ./service
     container_name: arcane-legion-test
-    command: ["python", "-m", "pytest", "test/", "-v"]
+    command: ["python", "-m", "pytest", ".", "-v"]
     environment:
       - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
     depends_on:
