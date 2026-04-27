@@ -161,3 +161,32 @@ def test_delete_removes_run(repo: RunRepository, session: Session) -> None:
 
 def test_delete_ignores_missing_run(repo: RunRepository) -> None:
     repo.delete(uuid4())
+
+
+def test_claim_oldest_queued_returns_none_when_no_queued_runs(repo: RunRepository, session: Session) -> None:
+    project_id = add_project(session)
+    repo.create(make_run(project_id=project_id, status=RunStatus.running))
+
+    assert repo.claim_oldest_queued() is None
+
+
+def test_claim_oldest_queued_returns_oldest_queued_run(repo: RunRepository, session: Session) -> None:
+    project_id = add_project(session)
+    older = make_run(project_id=project_id, created_at=datetime(2026, 1, 1))
+    newer = make_run(project_id=project_id, created_at=datetime(2026, 1, 2))
+    repo.create(newer)
+    repo.create(older)
+
+    result = repo.claim_oldest_queued()
+
+    assert result is not None
+    assert result.id == older.id
+
+
+def test_claim_oldest_queued_ignores_non_queued_runs(repo: RunRepository, session: Session) -> None:
+    project_id = add_project(session)
+    repo.create(make_run(project_id=project_id, status=RunStatus.running))
+    repo.create(make_run(project_id=project_id, status=RunStatus.completed))
+    repo.create(make_run(project_id=project_id, status=RunStatus.failed))
+
+    assert repo.claim_oldest_queued() is None

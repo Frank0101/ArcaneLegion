@@ -1,8 +1,11 @@
+import logging
 import threading
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
 from api.routes.health import router as health_router
 from api.routes.project import router as project_router
