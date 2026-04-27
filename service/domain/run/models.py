@@ -34,7 +34,7 @@ class ActionResult:
 @dataclass
 class Agent:
     name: str
-    action: Callable[[], ActionResult]
+    action: Callable[["ExecutionResult"], ActionResult]
     next: Optional["Agent"] = None
 
 
