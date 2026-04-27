@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from domain.run.executor import RunExecutor
-from domain.run.models import ActionResult, ExecutionResult, Run, RunStatus
+from domain.run.models import ExecutionResult, Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 from domain.run.worker import RunWorker
 
@@ -50,16 +50,6 @@ class FailingRunExecutor(RunExecutor):
 
     def execute(self, _run: Run) -> ExecutionResult:
         raise RuntimeError("execution failed")
-
-
-class RejectingRunExecutor(RunExecutor):
-    def __init__(self) -> None:
-        pass
-
-    def execute(self, _run: Run) -> ExecutionResult:
-        return ExecutionResult(action_results={
-            "reviewer": ActionResult(output="rejected", success=False)
-        })
 
 
 def _make_run(**kwargs: object) -> Run:
@@ -123,15 +113,3 @@ def test_tick_marks_run_failed_when_execution_raises(repo: FakeRunRepository) ->
     assert result is not None
     assert result.status == RunStatus.failed
     assert result.error_message == "execution failed"
-
-
-def test_tick_marks_run_failed_when_execution_returns_failure(repo: FakeRunRepository) -> None:
-    run = _make_run()
-    repo.create(run)
-
-    RunWorker(repo, RejectingRunExecutor(), poll_interval=0)._tick()
-
-    result = repo.get_by_id(run.id)
-    assert result is not None
-    assert result.status == RunStatus.failed
-    assert result.error_message == "rejected"

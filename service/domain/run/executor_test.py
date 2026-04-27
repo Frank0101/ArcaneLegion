@@ -47,7 +47,7 @@ def test_execute_passes_coder_reviewer_chain_to_graph_manager() -> None:
 
 def test_execute_returns_graph_manager_result() -> None:
     expected = ExecutionResult(action_results={
-        "reviewer": ActionResult(output="done", success=True)
+        "reviewer": ActionResult(output="done", approved=True)
     })
     manager = _CapturingGraphManager(expected)
 

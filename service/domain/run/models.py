@@ -28,7 +28,7 @@ class Run:
 @dataclass
 class ActionResult:
     output: str
-    success: Optional[bool] = None
+    approved: Optional[bool] = None
 
 
 @dataclass
@@ -41,12 +41,3 @@ class Agent:
 @dataclass
 class ExecutionResult:
     action_results: dict[str, ActionResult]
-
-    @property
-    def success(self) -> bool:
-        return not any(r.success is False for r in self.action_results.values())
-
-    @property
-    def error_message(self) -> Optional[str]:
-        failures = [ar.output for ar in self.action_results.values() if ar.success is False]
-        return failures[0] if failures else None

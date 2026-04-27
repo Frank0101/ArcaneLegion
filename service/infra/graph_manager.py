@@ -1,4 +1,4 @@
-from typing import Callable, Optional, TypedDict, cast
+from typing import Callable, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -18,23 +18,25 @@ def _wrap(agent: Agent) -> Callable[[_ExecutionState], dict[str, object]]:
     return node
 
 
+def _build_graph(agent: Agent) -> StateGraph:
+    builder: StateGraph = StateGraph(_ExecutionState)
+    current: Optional[Agent] = agent
+    prev_name: Optional[str] = None
+    while current is not None:
+        builder.add_node(current.name, _wrap(current))
+        if prev_name is None:
+            builder.set_entry_point(current.name)
+        else:
+            builder.add_edge(prev_name, current.name)
+        prev_name = current.name
+        current = current.next
+    if prev_name is not None:
+        builder.add_edge(prev_name, END)
+    return builder
+
+
 class LangGraphManager(AbstractGraphManager):
     def execute_graph(self, agent: Agent) -> ExecutionResult:
-        builder: StateGraph = StateGraph(_ExecutionState)
-        current: Optional[Agent] = agent
-        prev_name: Optional[str] = None
-        while current is not None:
-            builder.add_node(current.name, _wrap(current))
-            if prev_name is None:
-                builder.set_entry_point(current.name)
-            else:
-                builder.add_edge(prev_name, current.name)
-            prev_name = current.name
-            current = current.next
-        if prev_name is not None:
-            builder.add_edge(prev_name, END)
-        final = cast(
-            _ExecutionState,
-            builder.compile().invoke({"action_results": {}}),
-        )
-        return ExecutionResult(action_results=final["action_results"])
+        graph = _build_graph(agent).compile()
+        state = graph.invoke({"action_results": {}})
+        return ExecutionResult(action_results=state["action_results"])

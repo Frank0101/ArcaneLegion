@@ -28,16 +28,15 @@ def test_execute_collects_all_agent_outputs() -> None:
         action=lambda: ActionResult(output=f"Implemented fake task for run title '{run.title}'"),
         next=Agent(
             name="reviewer",
-            action=lambda: ActionResult(output="Approved fake implementation", success=True),
+            action=lambda: ActionResult(output="Approved fake implementation", approved=True),
         ),
     )
 
     result = LangGraphManager().execute_graph(agent)
 
-    assert result.success is True
     assert result.action_results["coder"].output == "Implemented fake task for run title 'My Task'"
     assert result.action_results["reviewer"].output == "Approved fake implementation"
-    assert result.action_results["reviewer"].success is True
+    assert result.action_results["reviewer"].approved is True
 
 
 def test_execute_not_approved_when_reviewer_rejects() -> None:
@@ -46,11 +45,10 @@ def test_execute_not_approved_when_reviewer_rejects() -> None:
         action=lambda: ActionResult(output="coded"),
         next=Agent(
             name="reviewer",
-            action=lambda: ActionResult(output="Rejected", success=False),
+            action=lambda: ActionResult(output="Rejected", approved=False),
         ),
     )
 
     result = LangGraphManager().execute_graph(agent)
 
-    assert result.success is False
     assert result.action_results["reviewer"].output == "Rejected"

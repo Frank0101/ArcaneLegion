@@ -11,7 +11,7 @@ class RunExecutor:
             return ActionResult(output=f"Implemented fake task for run title '{run.title}'")
 
         def reviewer_action() -> ActionResult:
-            return ActionResult(output="Approved fake implementation", success=True)
+            return ActionResult(output="Approved fake implementation", approved=True)
 
         return self._graph_manager.execute_graph(Agent(
             name="coder",
