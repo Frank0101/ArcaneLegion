@@ -1,14 +1,14 @@
 from collections.abc import Generator
-from datetime import datetime, timezone
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.schemas.run import RunResponse, RunRequest
+from api.schemas.run import RunRequest, RunResponse
 from data.repositories.run import RunRepository
 from data.session import create_session
-from domain.run.models import Run, RunStatus
+from domain.run.models import Run
+from domain.run.service import RunService
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -25,32 +25,30 @@ def get_repository(session: Session = Depends(get_session)) -> RunRepository:
     return RunRepository(session)
 
 
+def get_service(repo: RunRepository = Depends(get_repository)) -> RunService:
+    return RunService(repo)
+
+
 @router.get("/", response_model=list[RunResponse])
-def list_runs(repo: RunRepository = Depends(get_repository)) -> list[RunResponse]:
-    return [RunResponse.model_validate(p) for p in repo.get_all()]
+def list_runs(service: RunService = Depends(get_service)) -> list[RunResponse]:
+    return [RunResponse.model_validate(r) for r in service.get_all()]
 
 
 @router.get("/{run_id}", response_model=RunResponse)
-def get_run(run_id: UUID, repo: RunRepository = Depends(get_repository)) -> RunResponse:
-    run = repo.get_by_id(run_id)
+def get_run(run_id: UUID, service: RunService = Depends(get_service)) -> RunResponse:
+    run = service.get_by_id(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
     return RunResponse.model_validate(run)
 
 
 @router.post("/", response_model=RunResponse, status_code=201)
-def create_run(body: RunRequest, repo: RunRepository = Depends(get_repository)) -> RunResponse:
-    run = repo.create(Run(
-        id=uuid4(),
+def create_run(body: RunRequest, service: RunService = Depends(get_service)) -> RunResponse:
+    run = service.create(
         project_id=body.project_id,
         title=body.title,
         description=body.description,
-        status=RunStatus.queued,
-        created_at=datetime.now(timezone.utc),
-        started_at=None,
-        completed_at=None,
-        error_message=None,
-    ))
+    )
     return RunResponse.model_validate(run)
 
 
@@ -58,12 +56,12 @@ def create_run(body: RunRequest, repo: RunRepository = Depends(get_repository)) 
 def update_run(
         run_id: UUID,
         body: RunRequest,
-        repo: RunRepository = Depends(get_repository),
+        service: RunService = Depends(get_service),
 ) -> RunResponse:
-    existing = repo.get_by_id(run_id)
+    existing = service.get_by_id(run_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    updated = repo.update(Run(
+    run = service.update(Run(
         id=run_id,
         project_id=body.project_id,
         title=body.title,
@@ -74,11 +72,10 @@ def update_run(
         completed_at=existing.completed_at,
         error_message=existing.error_message,
     ))
-    return RunResponse.model_validate(updated)
+    return RunResponse.model_validate(run)
 
 
 @router.delete("/{run_id}", status_code=204)
-def delete_run(run_id: UUID, repo: RunRepository = Depends(get_repository)) -> None:
-    if repo.get_by_id(run_id) is None:
+def delete_run(run_id: UUID, service: RunService = Depends(get_service)) -> None:
+    if not service.delete(run_id):
         raise HTTPException(status_code=404, detail="Run not found")
-    repo.delete(run_id)

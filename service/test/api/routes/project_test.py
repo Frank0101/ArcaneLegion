@@ -4,9 +4,10 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from api.routes.project import get_repository
+from api.routes.project import get_service
 from domain.project.models import Project
 from domain.project.repository import AbstractProjectRepository
+from domain.project.service import ProjectService
 from main import app
 
 
@@ -39,7 +40,7 @@ def repo() -> FakeProjectRepository:
 
 @pytest.fixture
 def client(repo: FakeProjectRepository) -> Generator[TestClient, None, None]:
-    app.dependency_overrides[get_repository] = lambda: repo
+    app.dependency_overrides[get_service] = lambda: ProjectService(repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
 

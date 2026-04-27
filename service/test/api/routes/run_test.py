@@ -5,9 +5,10 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from api.routes.run import get_repository
+from api.routes.run import get_service
 from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
+from domain.run.service import RunService
 from main import app
 
 _CREATED_AT = datetime(2026, 1, 1, 0, 0, 0)
@@ -68,7 +69,7 @@ def repo() -> FakeRunRepository:
 
 @pytest.fixture
 def client(repo: FakeRunRepository) -> Generator[TestClient, None, None]:
-    app.dependency_overrides[get_repository] = lambda: repo
+    app.dependency_overrides[get_service] = lambda: RunService(repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
