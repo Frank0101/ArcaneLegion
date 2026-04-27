@@ -2,6 +2,7 @@ import logging
 import time
 from datetime import datetime, timezone
 
+from domain.run.executor import RunExecutor
 from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 
@@ -9,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class RunWorker:
-    def __init__(self, repo: AbstractRunRepository, poll_interval: float = 5.0) -> None:
+    def __init__(self, repo: AbstractRunRepository, executor: RunExecutor, poll_interval: float = 5.0) -> None:
         self._repo = repo
+        self._executor = executor
         self._poll_interval = poll_interval
 
     def run(self) -> None:
@@ -29,7 +31,7 @@ class RunWorker:
             **{**run.__dict__, "status": RunStatus.running, "started_at": datetime.now(timezone.utc)}
         ))
         try:
-            # NOP
+            self._executor.execute(run)
             self._repo.update(Run(
                 **{**run.__dict__, "status": RunStatus.completed, "completed_at": datetime.now(timezone.utc)}
             ))

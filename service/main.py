@@ -13,13 +13,14 @@ from api.routes.project import router as project_router
 from api.routes.run import router as run_router
 from data.repositories.run import RunRepository
 from data.session import create_session
+from domain.run.executor import RunExecutor
 from domain.run.worker import RunWorker
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     session = create_session()
-    worker = RunWorker(RunRepository(session))
+    worker = RunWorker(RunRepository(session), RunExecutor())
     thread = threading.Thread(target=worker.run, daemon=True)
     thread.start()
     yield

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from domain.run.executor import RunExecutor
 from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 from domain.run.worker import RunWorker
@@ -35,6 +36,16 @@ class FakeRunRepository(AbstractRunRepository):
         return min(queued, key=lambda r: r.created_at) if queued else None
 
 
+class FakeRunExecutor(RunExecutor):
+    def execute(self, _run: Run) -> None:
+        pass
+
+
+class FailingRunExecutor(RunExecutor):
+    def execute(self, _run: Run) -> None:
+        raise RuntimeError("execution failed")
+
+
 def _make_run(**kwargs: object) -> Run:
     defaults: dict[str, object] = {
         "id": uuid4(),
@@ -57,8 +68,13 @@ def repo() -> FakeRunRepository:
 
 
 @pytest.fixture
-def worker(repo: FakeRunRepository) -> RunWorker:
-    return RunWorker(repo, poll_interval=0)
+def executor() -> FakeRunExecutor:
+    return FakeRunExecutor()
+
+
+@pytest.fixture
+def worker(repo: FakeRunRepository, executor: FakeRunExecutor) -> RunWorker:
+    return RunWorker(repo, executor, poll_interval=0)
 
 
 def test_tick_sleeps_when_no_queued_run(worker: RunWorker) -> None:
@@ -81,19 +97,11 @@ def test_tick_marks_run_running_then_completed(worker: RunWorker, repo: FakeRunR
     assert result.completed_at is not None
 
 
-class UpdateFailingOnCompletedRepository(FakeRunRepository):
-    def update(self, run: Run) -> Run:
-        if run.status == RunStatus.completed:
-            raise RuntimeError("execution failed")
-        return super().update(run)
-
-
-def test_tick_marks_run_failed_when_execution_raises() -> None:
-    repo = UpdateFailingOnCompletedRepository()
+def test_tick_marks_run_failed_when_execution_raises(repo: FakeRunRepository) -> None:
     run = _make_run()
     repo.create(run)
 
-    RunWorker(repo, poll_interval=0)._tick()
+    RunWorker(repo, FailingRunExecutor(), poll_interval=0)._tick()
 
     result = repo.get_by_id(run.id)
     assert result is not None
