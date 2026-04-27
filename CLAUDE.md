@@ -16,12 +16,13 @@ This must be run from `service/` with `DATABASE_URL` set and the database reacha
 
 ## Layer architecture
 
-The service is split into three layers. Each layer may only depend on layers below it, never above.
+The service is split into four layers. Each layer may only depend on layers below it, never above.
 
 ```
 api/         → HTTP layer (routes, schemas)
 domain/      → business logic (services, models, repository interfaces)
 data/        → persistence (repository implementations, ORM models, migrations)
+infra/       → framework adapters (e.g. LangGraphManager implementing AbstractGraphManager)
 ```
 
 ### Domain layer (`domain/<entity>/`)
@@ -62,6 +63,8 @@ Examples:
 
 ### Tests
 
-- Route tests (`test/api/routes/`) override `get_service` with a fake service backed by a fake repository. They test HTTP concerns only.
-- Service tests (`test/domain/<entity>/`) use a fake repository. They test business logic: field generation, not-found handling, invariant preservation.
-- Repository tests (`test/data/repositories/`) hit a real database. They test persistence correctness.
+Test files are co-located with the source files they test, named `<module>_test.py`.
+
+- Route tests (`api/routes/<entity>_test.py`) override `get_service` with a fake service backed by a fake repository. They test HTTP concerns only.
+- Service tests (`domain/<entity>/service_test.py`) use a fake repository. They test business logic: field generation, not-found handling, invariant preservation.
+- Repository tests (`data/repositories/<entity>_test.py`) hit a real database. They test persistence correctness.
