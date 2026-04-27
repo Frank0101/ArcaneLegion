@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from datetime import datetime
+from typing import Optional
 from uuid import UUID, uuid4
 
 import pytest
@@ -44,7 +45,7 @@ def make_run(
         created_at: datetime = _CREATED_AT,
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
-        error_message: str | None = None,
+        error_message: Optional[str] = None,
 ) -> Run:
     return Run(
         id=run_id or uuid4(),

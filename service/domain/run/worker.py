@@ -1,6 +1,7 @@
 import logging
 import time
 from datetime import datetime, timezone
+from typing import Optional
 
 from domain.run.executor import RunExecutor
 from domain.run.models import Run, RunStatus
@@ -31,14 +32,20 @@ class RunWorker:
             **{**run.__dict__, "status": RunStatus.running, "started_at": datetime.now(timezone.utc)}
         ))
         try:
-            self._executor.execute(run)
-            self._repo.update(Run(
-                **{**run.__dict__, "status": RunStatus.completed, "completed_at": datetime.now(timezone.utc)}
-            ))
-            logger.info("Completed run %s", run.id)
+            result = self._executor.execute(run)
+            if result.success:
+                self._repo.update(Run(
+                    **{**run.__dict__, "status": RunStatus.completed, "completed_at": datetime.now(timezone.utc)}
+                ))
+                logger.info("Completed run %s", run.id)
+            else:
+                self._fail(run, result.error_message)
         except Exception as e:
-            self._repo.update(Run(
-                **{**run.__dict__, "status": RunStatus.failed, "completed_at": datetime.now(timezone.utc),
-                   "error_message": str(e)}
-            ))
-            logger.error("Failed run %s: %s", run.id, e)
+            self._fail(run, str(e))
+
+    def _fail(self, run: Run, error_message: Optional[str]) -> None:
+        self._repo.update(Run(
+            **{**run.__dict__, "status": RunStatus.failed, "completed_at": datetime.now(timezone.utc),
+               "error_message": error_message}
+        ))
+        logger.error("Failed run %s: %s", run.id, error_message)

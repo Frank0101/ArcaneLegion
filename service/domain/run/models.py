@@ -23,3 +23,10 @@ class Run:
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
     error_message: Optional[str]
+
+
+@dataclass
+class ExecutionResult:
+    success: bool
+    summary: dict[str, object]
+    error_message: Optional[str]

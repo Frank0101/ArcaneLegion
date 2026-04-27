@@ -49,6 +49,17 @@ route → get_service → get_repository → get_session
 
 Routes are responsible for HTTP concerns only: request parsing, response serialization, status codes, and raising `HTTPException`. Business logic belongs in the service.
 
+### When to use an abstract class as interface
+
+Use an abstract class (`AbstractX`) only at a **layer boundary** — when the domain needs something whose implementation lives in a different layer (data, infra). The domain owns the abstract interface; the other layer provides the concrete implementation. Wiring happens at the composition root (`main.py`).
+
+Do **not** create an abstract class when both the caller and the implementation live in the same layer. In that case, depend on the concrete class directly. Tests can subclass it and override the relevant methods.
+
+Examples:
+- `AbstractRunRepository` — domain interface, `RunRepository` in data/ implements it. ✓
+- `AbstractGraphManager` — domain interface, `LangGraphManager` in infra/ implements it. ✓
+- `RunExecutor` — no abstract needed; worker and executor are both in domain/. Tests subclass `RunExecutor` directly. ✓
+
 ### Tests
 
 - Route tests (`test/api/routes/`) override `get_service` with a fake service backed by a fake repository. They test HTTP concerns only.
