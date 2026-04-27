@@ -2,7 +2,7 @@ from typing import Callable, Optional
 
 from domain.run.executor import RunExecutor
 from domain.run.graph_manager import AbstractGraphManager
-from domain.run.models import ActionResult, Agent, ExecutionResult, Run
+from domain.run.models import ActionResult, Agent, AgentRole, ExecutionResult, Run
 
 
 class _CapturingGraphManager(AbstractGraphManager):
@@ -21,17 +21,17 @@ def test_execute_passes_planner_coder_reviewer_chain_to_graph_manager(make_run: 
     RunExecutor(manager).execute(make_run())
 
     assert manager.received_agent is not None
-    assert manager.received_agent.name == "planner"
+    assert manager.received_agent.role == AgentRole.planner
     assert manager.received_agent.next is not None
-    assert manager.received_agent.next.name == "coder"
+    assert manager.received_agent.next.role == AgentRole.coder
     assert manager.received_agent.next.next is not None
-    assert manager.received_agent.next.next.name == "reviewer"
+    assert manager.received_agent.next.next.role == AgentRole.reviewer
     assert manager.received_agent.next.next.next is None
 
 
 def test_execute_returns_graph_manager_result(make_run: Callable[..., Run]) -> None:
     expected = ExecutionResult(action_results={
-        "reviewer": ActionResult(output="done", approved=True)
+        AgentRole.reviewer: ActionResult(output="done", approved=True)
     })
     manager = _CapturingGraphManager(expected)
 

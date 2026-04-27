@@ -1,5 +1,5 @@
 from domain.run.graph_manager import AbstractGraphManager
-from domain.run.models import ActionResult, Agent, ExecutionResult, Run
+from domain.run.models import ActionResult, Agent, AgentRole, ExecutionResult, Run
 
 
 class RunExecutor:
@@ -17,13 +17,13 @@ class RunExecutor:
             return ActionResult(output="Approved fake implementation", approved=True)
 
         return self._graph_manager.execute_graph(Agent(
-            name="planner",
+            role=AgentRole.planner,
             action=planner_action,
             next=Agent(
-                name="coder",
+                role=AgentRole.coder,
                 action=coder_action,
                 next=Agent(
-                    name="reviewer",
+                    role=AgentRole.reviewer,
                     action=reviewer_action,
                 )
             )

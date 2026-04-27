@@ -12,6 +12,12 @@ class RunStatus(str, Enum):
     failed = "failed"
 
 
+class AgentRole(str, Enum):
+    planner = "planner"
+    coder = "coder"
+    reviewer = "reviewer"
+
+
 @dataclass
 class Run:
     id: UUID
@@ -33,11 +39,11 @@ class ActionResult:
 
 @dataclass
 class Agent:
-    name: str
+    role: AgentRole
     action: Callable[["ExecutionResult"], ActionResult]
     next: Optional["Agent"] = None
 
 
 @dataclass
 class ExecutionResult:
-    action_results: dict[str, ActionResult]
+    action_results: dict[AgentRole, ActionResult]
