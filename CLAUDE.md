@@ -2,7 +2,7 @@
 
 ## Python type annotations
 
-All Python functions and methods must have type annotations on both parameters and return type. This includes test functions, which should be annotated `-> None`.
+All Python functions and methods must have type annotations on both parameters and return type. This includes test functions, which should be annotated `-> None`. Lambda expressions used for quick stubbing in tests are exempt.
 
 ## Database migrations
 
@@ -65,6 +65,6 @@ Examples:
 
 Test files are co-located with the source files they test, named `<module>_test.py`.
 
-- Route tests (`api/routes/<entity>_test.py`) override `get_service` with a fake service backed by a fake repository. They test HTTP concerns only.
+- Route tests (`api/routes/<entity>_test.py`) override `get_service` via `app.dependency_overrides` to inject the real service backed by a fake repository, bypassing the normal dependency chain. They are E2E-style tests that cover the full request-to-response path including service logic.
 - Service tests (`domain/<entity>/service_test.py`) use a fake repository. They test business logic: field generation, not-found handling, invariant preservation.
 - Repository tests (`data/repositories/<entity>_test.py`) hit a real database. They test persistence correctness.

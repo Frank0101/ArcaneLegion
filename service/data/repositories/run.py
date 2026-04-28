@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from data.models.run import RunRow
-from domain.run.models import Run
+from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 
 
@@ -74,7 +74,6 @@ class RunRepository(AbstractRunRepository):
             self._session.commit()
 
     def claim_oldest_queued(self) -> Run | None:
-        from domain.run.models import RunStatus
         row = (
             self._session.query(RunRow)
             .filter(RunRow.status == RunStatus.queued)
