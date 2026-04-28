@@ -1,5 +1,5 @@
 from domain.run.models import ActionResult, Agent, AgentRole
-from infra.graph_manager import LangGraphManager
+from infra.lang_graph.lang_graph_manager import LangGraphManager
 
 
 def test_all_agent_results_are_collected() -> None:

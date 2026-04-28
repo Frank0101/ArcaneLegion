@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from domain.project.models import Project
 from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 
@@ -37,6 +38,21 @@ class FakeRunRepository(AbstractRunRepository):
 @pytest.fixture
 def repo() -> FakeRunRepository:
     return FakeRunRepository()
+
+
+@pytest.fixture
+def make_project() -> Callable[..., Project]:
+    def _factory(**kwargs: object) -> Project:
+        defaults: dict[str, object] = {
+            "id": uuid4(),
+            "name": "Test Project",
+            "repo_path": "/tmp/repo",
+            "default_branch": "main",
+        }
+        defaults.update(kwargs)
+        return Project(**defaults)  # type: ignore[arg-type]
+
+    return _factory
 
 
 @pytest.fixture

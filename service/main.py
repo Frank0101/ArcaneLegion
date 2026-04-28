@@ -11,17 +11,22 @@ logging.basicConfig(level=logging.INFO,
 from api.routes.health import router as health_router
 from api.routes.project import router as project_router
 from api.routes.run import router as run_router
+from data.repositories.project import ProjectRepository
 from data.repositories.run import RunRepository
 from data.session import create_session
 from domain.run.executor import RunExecutor
 from domain.run.worker import RunWorker
-from infra.graph_manager import LangGraphManager
+from infra.agent_runtimes.stub import StubAgentRuntime
+from infra.lang_graph.lang_graph_manager import LangGraphManager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     session = create_session()
-    worker = RunWorker(RunRepository(session), RunExecutor(LangGraphManager()))
+    worker = RunWorker(
+        RunRepository(session),
+        RunExecutor(LangGraphManager(), ProjectRepository(session), StubAgentRuntime()),
+    )
     thread = threading.Thread(target=worker.run, daemon=True)
     thread.start()
     yield
