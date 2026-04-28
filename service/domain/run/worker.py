@@ -26,7 +26,7 @@ class RunWorker:
             time.sleep(self._poll_interval)
             return
 
-        logger.info("Starting run %s", run.id)
+        logger.info("Run %s starting", run.id)
         run = self._repo.update(Run(
             **{**run.__dict__, "status": RunStatus.running, "started_at": datetime.now(timezone.utc)}
         ))
@@ -35,10 +35,10 @@ class RunWorker:
             self._repo.update(Run(
                 **{**run.__dict__, "status": RunStatus.completed, "completed_at": datetime.now(timezone.utc)}
             ))
-            logger.info("Completed run %s", run.id)
+            logger.info("Run %s completed", run.id)
         except Exception as e:
             self._repo.update(Run(
                 **{**run.__dict__, "status": RunStatus.failed, "completed_at": datetime.now(timezone.utc),
                    "error_message": str(e)}
             ))
-            logger.error("Failed run %s: %s", run.id, str(e))
+            logger.error("Run %s failed: %s", run.id, str(e))
