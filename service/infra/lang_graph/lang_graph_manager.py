@@ -19,7 +19,7 @@ def _wrap(agent: Agent) -> Callable[[_ExecutionState], dict[str, object]]:
     def node(state: _ExecutionState) -> dict[str, object]:
         logger.info("Agent %s starting", agent.role.value)
         result = agent.action(ExecutionResult(action_results=state[_ACTION_RESULTS_STATE_KEY]))
-        logger.info("Agent %s completed: %s", agent.role.value, result.output)
+        logger.info("Agent %s completed", agent.role.value)
         return {_ACTION_RESULTS_STATE_KEY: {**state[_ACTION_RESULTS_STATE_KEY], agent.role: result}}
 
     return node
