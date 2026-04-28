@@ -16,16 +16,18 @@ from data.repositories.run import RunRepository
 from data.session import create_session
 from domain.run.executor import RunExecutor
 from domain.run.worker import RunWorker
+from config import settings
 from infra.agent_runtimes.stub import StubAgentRuntime
 from infra.lang_graph.lang_graph_manager import LangGraphManager
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     session = create_session()
     worker = RunWorker(
         RunRepository(session),
         RunExecutor(LangGraphManager(), ProjectRepository(session), StubAgentRuntime()),
+        poll_interval=settings.worker_poll_interval,
     )
     thread = threading.Thread(target=worker.run, daemon=True)
     thread.start()

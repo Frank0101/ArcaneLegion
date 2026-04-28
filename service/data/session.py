@@ -3,6 +3,6 @@ from sqlalchemy.orm import sessionmaker, Session
 
 
 def create_session() -> Session:
-    from data.config import settings
+    from config import settings
     engine = create_engine(settings.database_url)
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)()

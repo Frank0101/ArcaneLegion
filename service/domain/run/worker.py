@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class RunWorker:
-    def __init__(self, repo: AbstractRunRepository, executor: RunExecutor, poll_interval: float = 5.0) -> None:
+    def __init__(self, repo: AbstractRunRepository, executor: RunExecutor, poll_interval: float) -> None:
         self._repo = repo
         self._executor = executor
         self._poll_interval = poll_interval
