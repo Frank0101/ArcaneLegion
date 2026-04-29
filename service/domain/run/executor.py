@@ -30,13 +30,13 @@ class RunExecutor:
             self,
             graph_manager: AbstractGraphManager,
             project_repo: AbstractProjectRepository,
-            runtime: AbstractAgentRuntime,
+            agent_runtime: AbstractAgentRuntime,
             repo_manager: AbstractRepoManager,
             workspace_base_path: str,
     ) -> None:
         self._graph_manager = graph_manager
         self._project_repo = project_repo
-        self._runtime = runtime
+        self._agent_runtime = agent_runtime
         self._repo_manager = repo_manager
         self._workspace_base_path = Path(workspace_base_path)
 
@@ -53,7 +53,7 @@ class RunExecutor:
 
             def planner_action(_) -> ActionResult:
                 prompt = f"Task: {run.title}\n\n{run.description}"
-                output = self._runtime.run(AgentRole.planner, prompt, workspace, project.default_branch)
+                output = self._agent_runtime.run(AgentRole.planner, prompt, workspace, project.default_branch)
                 return ActionResult(output=output)
 
             def coder_action(so_far: ExecutionResult) -> ActionResult:
