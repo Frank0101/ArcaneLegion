@@ -6,16 +6,6 @@ All Python functions and methods must have type annotations on both parameters a
 
 Use `X | None` instead of `Optional[X]`. Do not import `Optional` from `typing`.
 
-## Database migrations
-
-Never write Alembic migration files by hand. Always generate them by running:
-
-```bash
-python -m alembic revision --autogenerate -m "short description"
-```
-
-This must be run from `service/` with `DATABASE_URL` set and the database reachable.
-
 ## Layer architecture
 
 The service is split into four layers. Each layer may only depend on layers below it, never above.
@@ -26,6 +16,18 @@ domain/      → business logic (services, models, repository interfaces)
 data/        → persistence (repository implementations, ORM models, migrations)
 infra/       → framework adapters (e.g. LangGraphManager implementing AbstractGraphManager)
 ```
+
+### API layer (`api/routes/`)
+
+Routes depend on the service, not the repository directly. The dependency chain is:
+
+```
+route → get_service → get_repository → get_session
+```
+
+`get_repository` is the IoC resolution point where the abstract interface is bound to the concrete implementation.
+
+Routes are responsible for HTTP concerns only: request parsing, response serialization, status codes, and raising `HTTPException`. Business logic belongs in the service.
 
 ### Domain layer (`domain/<entity>/`)
 
@@ -44,17 +46,21 @@ The domain may also contain:
 
 Contains the concrete repository implementations. These implement the abstract interfaces defined in the domain. The binding of interface → implementation is done in the API layer via FastAPI dependency injection (`get_repository`).
 
-### API layer (`api/routes/`)
+### Infra layer (`infra/`)
 
-Routes depend on the service, not the repository directly. The dependency chain is:
+Infra contains framework adapters — concrete implementations of domain abstract interfaces that depend on external frameworks or services (e.g. `LangGraphManager`, `GitHubRepoManager`).
 
-```
-route → get_service → get_repository → get_session
-```
+When an infra component needs to dispatch to one of several implementations based on runtime data, use the strategy pattern entirely within infra — the domain stays unaware of it.
 
-`get_repository` is the IoC resolution point where the abstract interface is bound to the concrete implementation.
+This is a variant of the classic Strategy pattern: rather than a single externally-selected strategy, each implementation self-declares what it can handle via `can_handle()`, and an external coordinator selects the right one at runtime. This distributes the selection logic across implementations, keeping each self-contained and the coordinator trivial.
 
-Routes are responsible for HTTP concerns only: request parsing, response serialization, status codes, and raising `HTTPException`. Business logic belongs in the service.
+Structure:
+- The domain owns a single abstract interface (e.g. `AbstractXxx`) with the core method(s).
+- In infra, a `XxxStrategy` file contains two things: an abstract strategy class (`AbstractXxxStrategy`) that extends the domain abstract and adds a `can_handle()` `@staticmethod`, and a coordinator class (`XxxStrategy`) that implements the domain abstract, holds a `list[AbstractXxxStrategy]`, and dispatches to the first strategy whose `can_handle()` returns `True`.
+- Each concrete strategy inherits from `AbstractXxxStrategy` and implements both `can_handle()` and the domain method(s). These live in a dedicated subfolder in infra.
+- Everything is wired at the composition root (`main.py`).
+
+This keeps the domain interface stable. Adding a new implementation is just a new file and an extra entry in the list in `main.py`.
 
 ### When to use an abstract class as interface
 
@@ -77,21 +83,36 @@ Logging lives in the domain layer, not in infra. Infra components (e.g. `LangGra
 
 Use `logging.getLogger(__name__)` at module level.
 
-### Strategy pattern within infra
+## Database migrations
 
-When an infra component needs to dispatch to one of several implementations based on runtime data, use the strategy pattern entirely within infra — the domain stays unaware of it.
+Never write Alembic migration files by hand. Always generate them by running:
 
-This is a variant of the classic Strategy pattern: rather than a single externally-selected strategy, each implementation self-declares what it can handle via `can_handle()`, and an external coordinator selects the right one at runtime. This distributes the selection logic across implementations, keeping each self-contained and the coordinator trivial.
+```bash
+python -m alembic revision --autogenerate -m "short description"
+```
 
-Structure:
-- The domain owns a single abstract interface (e.g. `AbstractXxx`) with the core method(s).
-- In infra, a `XxxStrategy` file contains two things: an abstract strategy class (`AbstractXxxStrategy`) that extends the domain abstract and adds a `can_handle()` `@staticmethod`, and a coordinator class (`XxxStrategy`) that implements the domain abstract, holds a `list[AbstractXxxStrategy]`, and dispatches to the first strategy whose `can_handle()` returns `True`.
-- Each concrete strategy inherits from `AbstractXxxStrategy` and implements both `can_handle()` and the domain method(s). These live in a dedicated subfolder in infra.
-- Everything is wired at the composition root (`main.py`).
+This must be run from `service/` with `DATABASE_URL` set and the database reachable.
 
-This keeps the domain interface stable. Adding a new implementation is just a new file and an extra entry in the list in `main.py`.
+## Secrets handling
 
-### Tests
+Never embed secrets (tokens, passwords, API keys) in URLs or subprocess command arguments — they leak into logs and tracebacks via `CalledProcessError.cmd`. Pass them via environment variables or HTTP headers instead.
+
+When wrapping a subprocess call that uses a secret, catch `CalledProcessError` and re-raise a sanitised `RuntimeError`: decode `e.stderr`, replace any sensitive value with `***`, and use `from None` to suppress the original exception (which carries the command in `.cmd`).
+
+```python
+credentials = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+try:
+    subprocess.run(
+        ["git", "-c", f"http.extraHeader=Authorization: Basic {credentials}", "clone", ...],
+        check=True,
+        capture_output=True,
+    )
+except subprocess.CalledProcessError as e:
+    stderr = e.stderr.decode(errors="replace").strip().replace(credentials, "***")
+    raise RuntimeError(f"command failed (exit {e.returncode}): {stderr}") from None
+```
+
+## Tests
 
 Test files are co-located with the source files they test, named `<module>_test.py`.
 
