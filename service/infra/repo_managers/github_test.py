@@ -36,17 +36,19 @@ def test_clone_calls_git_with_auth_header(tmp_path: Path) -> None:
         ],
         check=True,
         capture_output=True,
+        text=True,
     )
 
 
-def test_clone_failure_does_not_expose_token(tmp_path: Path) -> None:
+@pytest.mark.parametrize("secret", [_TOKEN, _CREDENTIALS])
+def test_clone_failure_does_not_expose_secret(tmp_path: Path, secret: str) -> None:
     failure = subprocess.CalledProcessError(
-        128, [], stderr=f"fatal: auth failed with {_CREDENTIALS}".encode())
+        128, [], stderr=f"fatal: auth failed with {secret}")
     with patch("subprocess.run", side_effect=failure):
         with pytest.raises(RuntimeError) as exception_info:
             GitHubRepoManager(_TOKEN).clone(_REPO_URL, "main", tmp_path)
 
     error = exception_info.value
     assert "fatal: auth failed with ***" in str(error)
-    assert _CREDENTIALS not in str(error)
+    assert secret not in str(error)
     assert error.__cause__ is None

@@ -28,7 +28,13 @@ class GitHubRepoManager(AbstractRepoManagerStrategy):
             ],
                 check=True,
                 capture_output=True,
+                text=True,
             )
         except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode(errors="replace").strip().replace(credentials, "***")
+            stderr = (
+                (e.stderr or "")
+                .strip()
+                .replace(credentials, "***")
+                .replace(self._token, "***")
+            )
             raise RuntimeError(f"git clone failed (exit {e.returncode}): {stderr}") from None

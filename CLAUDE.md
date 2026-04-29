@@ -97,7 +97,7 @@ This must be run from `service/` with `DATABASE_URL` set and the database reacha
 
 Never embed secrets (tokens, passwords, API keys) in URLs or subprocess command arguments — they leak into logs and tracebacks via `CalledProcessError.cmd`. Pass them via environment variables or HTTP headers instead.
 
-When wrapping a subprocess call that uses a secret, catch `CalledProcessError` and re-raise a sanitised `RuntimeError`: decode `e.stderr`, replace any sensitive value with `***`, and use `from None` to suppress the original exception (which carries the command in `.cmd`).
+When wrapping a subprocess call that uses a secret, catch `CalledProcessError` and re-raise a sanitised `RuntimeError`: use `text=True` so `e.stderr` is already a string, replace every sensitive value with `***` (both derived forms like base64 and the raw token), and use `from None` to suppress the original exception (which carries the command in `.cmd`).
 
 ```python
 credentials = base64.b64encode(f"x-access-token:{token}".encode()).decode()
@@ -106,9 +106,15 @@ try:
         ["git", "-c", f"http.extraHeader=Authorization: Basic {credentials}", "clone", ...],
         check=True,
         capture_output=True,
+        text=True,
     )
 except subprocess.CalledProcessError as e:
-    stderr = e.stderr.decode(errors="replace").strip().replace(credentials, "***")
+    stderr = (
+        (e.stderr or "")
+        .strip()
+        .replace(credentials, "***")
+        .replace(token, "***")
+    )
     raise RuntimeError(f"command failed (exit {e.returncode}): {stderr}") from None
 ```
 
