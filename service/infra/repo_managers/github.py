@@ -15,6 +15,7 @@ class GitHubRepoManager(AbstractRepoManagerStrategy):
     def clone(self, repo_url: str, branch: str, dest: Path) -> None:
         if self._token is None:
             raise ValueError("GITHUB_TOKEN is not configured")
+
         authenticated_url = repo_url.replace("https://", f"https://{self._token}@")
         subprocess.run(
             ["git", "clone", "--branch", branch, "--single-branch", authenticated_url, str(dest)],

@@ -54,6 +54,7 @@ class RunRepository(AbstractRunRepository):
         row = self._session.get(RunRow, run.id)
         if row is None:
             raise ValueError(f"Run {run.id} not found")
+
         row.id = run.id
         row.project_id = run.project_id
         row.title = run.title

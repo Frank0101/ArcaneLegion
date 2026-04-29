@@ -44,6 +44,7 @@ class ProjectRepository(AbstractProjectRepository):
         row = self._session.get(ProjectRow, project.id)
         if row is None:
             raise ValueError(f"Project {project.id} not found")
+
         row.name = project.name
         row.repo_path = project.repo_path
         row.default_branch = project.default_branch
