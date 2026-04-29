@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import patch
 
 import pytest
@@ -9,7 +9,7 @@ from domain.run.repository import AbstractRunRepository
 from domain.run.worker import RunWorker
 
 
-class FakeRunExecutor(RunExecutor):
+class _FakeRunExecutor(RunExecutor):
     def __init__(self) -> None:
         pass
 
@@ -17,7 +17,7 @@ class FakeRunExecutor(RunExecutor):
         return ExecutionResult(action_results={})
 
 
-class FailingRunExecutor(RunExecutor):
+class _FailingRunExecutor(RunExecutor):
     def __init__(self) -> None:
         pass
 
@@ -26,12 +26,12 @@ class FailingRunExecutor(RunExecutor):
 
 
 @pytest.fixture
-def executor() -> FakeRunExecutor:
-    return FakeRunExecutor()
+def executor() -> _FakeRunExecutor:
+    return _FakeRunExecutor()
 
 
 @pytest.fixture
-def worker(repo: AbstractRunRepository, executor: FakeRunExecutor) -> RunWorker:
+def worker(repo: AbstractRunRepository, executor: _FakeRunExecutor) -> RunWorker:
     return RunWorker(repo, executor, poll_interval=0)
 
 
@@ -63,7 +63,7 @@ def test_tick_marks_run_failed_when_execution_raises(
     run = make_run()
     repo.create(run)
 
-    RunWorker(repo, FailingRunExecutor(), poll_interval=0)._tick()
+    RunWorker(repo, _FailingRunExecutor(), poll_interval=0)._tick()
 
     result = repo.get_by_id(run.id)
     assert result is not None

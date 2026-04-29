@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable
 from uuid import UUID, uuid4
 
 import pytest
@@ -9,7 +9,7 @@ from domain.run.models import Run, RunStatus
 from domain.run.repository import AbstractRunRepository
 
 
-class FakeRunRepository(AbstractRunRepository):
+class _FakeRunRepository(AbstractRunRepository):
     def __init__(self) -> None:
         self._runs: dict[UUID, Run] = {}
 
@@ -36,8 +36,8 @@ class FakeRunRepository(AbstractRunRepository):
 
 
 @pytest.fixture
-def repo() -> FakeRunRepository:
-    return FakeRunRepository()
+def repo() -> _FakeRunRepository:
+    return _FakeRunRepository()
 
 
 @pytest.fixture

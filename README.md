@@ -2,6 +2,7 @@
 
 ## Table of Contents
 
+- [Configuration](#configuration)
 - [Running the service](#running-the-service)
   - [Docker Compose setup](#docker-compose-setup)
   - [Locally (without Docker)](#locally-without-docker)
@@ -11,6 +12,32 @@
   - [Inspecting PostgreSQL locally](#inspecting-postgresql-locally)
   - [Generating a new migration](#generating-a-new-migration)
   - [Running migrations manually](#running-migrations-manually)
+
+## Configuration
+
+The service requires the following environment variables:
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `POSTGRES_USER` | yes | — | PostgreSQL username |
+| `POSTGRES_PASSWORD` | yes | — | PostgreSQL password |
+| `POSTGRES_DB` | yes | — | PostgreSQL database name |
+| `DATABASE_URL` | yes | — | PostgreSQL connection string |
+| `GITHUB_TOKEN` | no | — | GitHub PAT. Requires: Contents (read and write), Pull requests (write). |
+| `WORKER_POLL_INTERVAL` | no | `5.0` | Seconds between worker poll cycles |
+| `WORKSPACE_BASE_PATH` | no | `.workspaces` | Directory for temporary run workspaces |
+
+`docker-compose.yml` reads all values from environment variables (`${VAR}`), which should be defined in a local `.env` file. Example:
+
+```env
+POSTGRES_USER=arcane
+POSTGRES_PASSWORD=arcane
+POSTGRES_DB=arcane_legion
+DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
+GITHUB_TOKEN={{token}}
+```
+
+In production, inject the real values via your environment or secrets manager (e.g. AWS Secrets Manager).
 
 ## Running the service
 
@@ -55,10 +82,12 @@ The service will be available at `http://localhost:8000`. Health check: `GET /he
 
 ## Running the tests
 
+Repository tests use `DATABASE_URL` for their sessions. Set it to SQLite in-memory when running locally (no database required):
+
 ```bash
 cd service
 source .venv/bin/activate
-python -m pytest . -v
+DATABASE_URL=sqlite:///:memory: python -m pytest . -v
 ```
 
 If you haven't set up the virtual environment yet, do so first:

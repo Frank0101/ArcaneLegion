@@ -5,13 +5,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=arcane
-      - POSTGRES_PASSWORD=arcane
-      - POSTGRES_DB=arcane_legion
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - arcane_legion_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U arcane -d arcane_legion"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
     container_name: arcane-legion-migrate
     command: ["alembic", "upgrade", "head"]
     environment:
-      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,10 +33,7 @@ services:
     container_name: arcane-legion-test
     command: ["python", "-m", "pytest", ".", "-v"]
     environment:
-      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - "DATABASE_URL=sqlite:///:memory:"
     restart: "no"
 
   service:
@@ -46,7 +43,8 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
+      - DATABASE_URL=${DATABASE_URL}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
     depends_on:
       migrate:
         condition: service_completed_successfully

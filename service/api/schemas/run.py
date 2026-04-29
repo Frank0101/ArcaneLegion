@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -20,8 +19,8 @@ class RunResponse(BaseModel):
     description: str
     status: RunStatus
     created_at: datetime
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    error_message: Optional[str]
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
 
     model_config = {"from_attributes": True}

@@ -1,7 +1,28 @@
+import logging
+import tempfile
+from collections.abc import Callable
+from pathlib import Path
+
 from domain.project.repository import AbstractProjectRepository
+from domain.run.agent_runtime import AbstractAgentRuntime
 from domain.run.graph_manager import AbstractGraphManager
 from domain.run.models import ActionResult, Agent, AgentRole, ExecutionResult, Run
-from domain.run.runtime import AbstractAgentRuntime
+from domain.run.repo_manager import AbstractRepoManager
+
+logger = logging.getLogger(__name__)
+
+
+def _logged(
+        role: AgentRole,
+        action: Callable[[ExecutionResult], ActionResult],
+) -> Callable[[ExecutionResult], ActionResult]:
+    def wrapped(so_far: ExecutionResult) -> ActionResult:
+        logger.info("Agent %s starting", role.value)
+        result = action(so_far)
+        logger.info("Agent %s completed", role.value)
+        return result
+
+    return wrapped
 
 
 class RunExecutor:
@@ -10,36 +31,46 @@ class RunExecutor:
             graph_manager: AbstractGraphManager,
             project_repo: AbstractProjectRepository,
             runtime: AbstractAgentRuntime,
+            repo_manager: AbstractRepoManager,
+            workspace_base_path: str,
     ) -> None:
         self._graph_manager = graph_manager
         self._project_repo = project_repo
         self._runtime = runtime
+        self._repo_manager = repo_manager
+        self._workspace_base_path = Path(workspace_base_path)
 
     def execute(self, run: Run) -> ExecutionResult:
         project = self._project_repo.get_by_id(run.project_id)
         if project is None:
             raise ValueError(f"Project {run.project_id} not found")
 
-        def planner_action(_) -> ActionResult:
-            prompt = f"Task: {run.title}\n\n{run.description}"
-            output = self._runtime.run(AgentRole.planner, prompt, project.repo_path, project.default_branch)
-            return ActionResult(output=output)
+        with tempfile.TemporaryDirectory(prefix=f"{str(run.id)}_", dir=self._workspace_base_path) as workspace:
+            logger.info("Temporary workspace created: %s", workspace)
 
-        def coder_action(so_far: ExecutionResult) -> ActionResult:
-            return ActionResult(output=f"Implemented fake task for run title '{run.title}'")
+            self._repo_manager.clone(project.repo_path, project.default_branch, Path(workspace))
+            logger.info("Repo cloned to workspace: %s branch=%s", project.repo_path, project.default_branch)
 
-        def reviewer_action(so_far: ExecutionResult) -> ActionResult:
-            return ActionResult(output="Approved fake implementation", approved=True)
+            def planner_action(_) -> ActionResult:
+                prompt = f"Task: {run.title}\n\n{run.description}"
+                output = self._runtime.run(AgentRole.planner, prompt, workspace, project.default_branch)
+                return ActionResult(output=output)
 
-        return self._graph_manager.execute_graph(Agent(
-            role=AgentRole.planner,
-            action=planner_action,
-            next=Agent(
-                role=AgentRole.coder,
-                action=coder_action,
+            def coder_action(so_far: ExecutionResult) -> ActionResult:
+                return ActionResult(output=f"Implemented fake task for run title '{run.title}'")
+
+            def reviewer_action(so_far: ExecutionResult) -> ActionResult:
+                return ActionResult(output="Approved fake implementation", approved=True)
+
+            return self._graph_manager.execute_graph(Agent(
+                role=AgentRole.planner,
+                action=_logged(AgentRole.planner, planner_action),
                 next=Agent(
-                    role=AgentRole.reviewer,
-                    action=reviewer_action,
+                    role=AgentRole.coder,
+                    action=_logged(AgentRole.coder, coder_action),
+                    next=Agent(
+                        role=AgentRole.reviewer,
+                        action=_logged(AgentRole.reviewer, reviewer_action),
+                    )
                 )
-            )
-        ))
+            ))

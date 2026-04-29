@@ -38,7 +38,7 @@ def _run_body(**kwargs: object) -> dict[str, object]:
     return defaults
 
 
-class FakeRunRepository(AbstractRunRepository):
+class _FakeRunRepository(AbstractRunRepository):
     def __init__(self) -> None:
         self._runs: dict[UUID, Run] = {}
 
@@ -64,12 +64,12 @@ class FakeRunRepository(AbstractRunRepository):
 
 
 @pytest.fixture
-def repo() -> FakeRunRepository:
-    return FakeRunRepository()
+def repo() -> _FakeRunRepository:
+    return _FakeRunRepository()
 
 
 @pytest.fixture
-def client(repo: FakeRunRepository) -> Generator[TestClient, None, None]:
+def client(repo: _FakeRunRepository) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_service] = lambda: RunService(repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -81,7 +81,7 @@ def test_list_runs_returns_empty(client: TestClient) -> None:
     assert response.json() == []
 
 
-def test_list_runs_returns_all(client: TestClient, repo: FakeRunRepository) -> None:
+def test_list_runs_returns_all(client: TestClient, repo: _FakeRunRepository) -> None:
     repo.create(_make_run(title="Alpha"))
     repo.create(_make_run(title="Beta"))
     response = client.get("/runs/")
@@ -89,7 +89,7 @@ def test_list_runs_returns_all(client: TestClient, repo: FakeRunRepository) -> N
     assert len(response.json()) == 2
 
 
-def test_get_run_returns_run(client: TestClient, repo: FakeRunRepository) -> None:
+def test_get_run_returns_run(client: TestClient, repo: _FakeRunRepository) -> None:
     run = _make_run()
     repo.create(run)
     response = client.get(f"/runs/{run.id}")

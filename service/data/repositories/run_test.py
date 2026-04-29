@@ -1,13 +1,9 @@
-from collections.abc import Generator
 from datetime import datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from data.base import Base
 from data.models.project import ProjectRow
 from data.repositories.run import RunRepository
 from domain.run.models import Run, RunStatus
@@ -18,25 +14,11 @@ _COMPLETED_AT = datetime(2026, 1, 1, 0, 2, 0)
 
 
 @pytest.fixture
-def session() -> Generator[Session, None, None]:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine)
-    db_session = session_factory()
-    try:
-        yield db_session
-    finally:
-        db_session.close()
-        Base.metadata.drop_all(engine)
-        engine.dispose()
-
-
-@pytest.fixture
 def repo(session: Session) -> RunRepository:
     return RunRepository(session)
 
 
-def make_run(
+def _make_run(
         run_id: UUID | None = None,
         project_id: UUID | None = None,
         title: str = "Test Run",
@@ -45,7 +27,7 @@ def make_run(
         created_at: datetime = _CREATED_AT,
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
 ) -> Run:
     return Run(
         id=run_id or uuid4(),
@@ -60,7 +42,7 @@ def make_run(
     )
 
 
-def add_project(session: Session, project_id: UUID | None = None) -> UUID:
+def _add_project(session: Session, project_id: UUID | None = None) -> UUID:
     resolved_project_id = project_id or uuid4()
     session.add(
         ProjectRow(
@@ -75,8 +57,8 @@ def add_project(session: Session, project_id: UUID | None = None) -> UUID:
 
 
 def test_create_and_get_by_id(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    run = make_run(project_id=project_id)
+    project_id = _add_project(session)
+    run = _make_run(project_id=project_id)
 
     created = repo.create(run)
     result = repo.get_by_id(run.id)
@@ -86,8 +68,8 @@ def test_create_and_get_by_id(repo: RunRepository, session: Session) -> None:
 
 
 def test_create_with_optional_timestamps_and_error(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    run = make_run(
+    project_id = _add_project(session)
+    run = _make_run(
         project_id=project_id,
         status=RunStatus.failed,
         started_at=_STARTED_AT,
@@ -110,9 +92,9 @@ def test_get_by_id_returns_none_when_not_found(repo: RunRepository) -> None:
 
 
 def test_get_all_returns_all_runs(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    first = make_run(project_id=project_id, title="Alpha")
-    second = make_run(project_id=project_id, title="Beta")
+    project_id = _add_project(session)
+    first = _make_run(project_id=project_id, title="Alpha")
+    second = _make_run(project_id=project_id, title="Beta")
     repo.create(first)
     repo.create(second)
 
@@ -122,8 +104,8 @@ def test_get_all_returns_all_runs(repo: RunRepository, session: Session) -> None
 
 
 def test_update_returns_updated_run(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    run = make_run(project_id=project_id)
+    project_id = _add_project(session)
+    run = _make_run(project_id=project_id)
     repo.create(run)
     updated = Run(
         id=run.id,
@@ -144,15 +126,15 @@ def test_update_returns_updated_run(repo: RunRepository, session: Session) -> No
 
 
 def test_update_raises_when_not_found(repo: RunRepository) -> None:
-    run = make_run()
+    run = _make_run()
 
     with pytest.raises(ValueError, match=f"Run {run.id} not found"):
         repo.update(run)
 
 
 def test_delete_removes_run(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    run = make_run(project_id=project_id)
+    project_id = _add_project(session)
+    run = _make_run(project_id=project_id)
     repo.create(run)
 
     repo.delete(run.id)
@@ -168,16 +150,16 @@ def test_delete_ignores_missing_run(repo: RunRepository) -> None:
 def test_claim_oldest_queued_returns_none_for_non_queued(
         repo: RunRepository, session: Session, status: RunStatus
 ) -> None:
-    project_id = add_project(session)
-    repo.create(make_run(project_id=project_id, status=status))
+    project_id = _add_project(session)
+    repo.create(_make_run(project_id=project_id, status=status))
 
     assert repo.claim_oldest_queued() is None
 
 
 def test_claim_oldest_queued_returns_oldest_queued_run(repo: RunRepository, session: Session) -> None:
-    project_id = add_project(session)
-    older = make_run(project_id=project_id, created_at=datetime(2026, 1, 1))
-    newer = make_run(project_id=project_id, created_at=datetime(2026, 1, 2))
+    project_id = _add_project(session)
+    older = _make_run(project_id=project_id, created_at=datetime(2026, 1, 1))
+    newer = _make_run(project_id=project_id, created_at=datetime(2026, 1, 2))
     repo.create(newer)
     repo.create(older)
 

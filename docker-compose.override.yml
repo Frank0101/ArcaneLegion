@@ -10,6 +10,7 @@ services:
   service:
     volumes:
       - ./service:/app
+
     # Overrides the full CMD from the Dockerfile to add --reload (dev only).
     # --reload watches the filesystem and automatically restarts uvicorn when source files change,
     # enabling live code updates without rebuilding the image (made possible by the volume mount above).

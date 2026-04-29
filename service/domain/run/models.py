@@ -1,7 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Optional
 from uuid import UUID
 
 
@@ -26,22 +26,22 @@ class Run:
     description: str
     status: RunStatus
     created_at: datetime
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    error_message: Optional[str]
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
 
 
 @dataclass
 class ActionResult:
     output: str
-    approved: Optional[bool] = None
+    approved: bool | None = None
 
 
 @dataclass
 class Agent:
     role: AgentRole
     action: Callable[["ExecutionResult"], ActionResult]
-    next: Optional["Agent"] = None
+    next: "Agent | None" = None
 
 
 @dataclass

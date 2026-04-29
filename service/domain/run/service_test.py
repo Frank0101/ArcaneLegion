@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Callable
 from uuid import uuid4
 
 import pytest

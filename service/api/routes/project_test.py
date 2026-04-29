@@ -22,7 +22,7 @@ def _make_project(**kwargs: object) -> Project:
     return Project(**defaults)  # type: ignore[arg-type]
 
 
-class FakeProjectRepository(AbstractProjectRepository):
+class _FakeProjectRepository(AbstractProjectRepository):
     def __init__(self) -> None:
         self._projects: dict[UUID, Project] = {}
 
@@ -45,12 +45,12 @@ class FakeProjectRepository(AbstractProjectRepository):
 
 
 @pytest.fixture
-def repo() -> FakeProjectRepository:
-    return FakeProjectRepository()
+def repo() -> _FakeProjectRepository:
+    return _FakeProjectRepository()
 
 
 @pytest.fixture
-def client(repo: FakeProjectRepository) -> Generator[TestClient, None, None]:
+def client(repo: _FakeProjectRepository) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_service] = lambda: ProjectService(repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -62,7 +62,7 @@ def test_list_projects_returns_empty(client: TestClient) -> None:
     assert response.json() == []
 
 
-def test_list_projects_returns_all(client: TestClient, repo: FakeProjectRepository) -> None:
+def test_list_projects_returns_all(client: TestClient, repo: _FakeProjectRepository) -> None:
     repo.create(_make_project(name="Arcane"))
     repo.create(_make_project(name="Legion"))
     response = client.get("/projects/")
@@ -70,7 +70,7 @@ def test_list_projects_returns_all(client: TestClient, repo: FakeProjectReposito
     assert len(response.json()) == 2
 
 
-def test_get_project_returns_project(client: TestClient, repo: FakeProjectRepository) -> None:
+def test_get_project_returns_project(client: TestClient, repo: _FakeProjectRepository) -> None:
     project = _make_project()
     repo.create(project)
     response = client.get(f"/projects/{project.id}")
@@ -94,7 +94,7 @@ def test_create_project(client: TestClient) -> None:
     assert "id" in data
 
 
-def test_update_project_returns_updated(client: TestClient, repo: FakeProjectRepository) -> None:
+def test_update_project_returns_updated(client: TestClient, repo: _FakeProjectRepository) -> None:
     project = _make_project()
     repo.create(project)
     body = {"name": "Arcane Updated", "repo_path": "/repos/arcane-new", "default_branch": "develop"}
@@ -112,7 +112,7 @@ def test_update_project_returns_404_when_not_found(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_delete_project_returns_204(client: TestClient, repo: FakeProjectRepository) -> None:
+def test_delete_project_returns_204(client: TestClient, repo: _FakeProjectRepository) -> None:
     project = _make_project()
     repo.create(project)
     response = client.delete(f"/projects/{project.id}")

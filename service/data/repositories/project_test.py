@@ -1,27 +1,10 @@
-from collections.abc import Generator
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from data.base import Base
 from data.repositories.project import ProjectRepository
 from domain.project.models import Project
-
-
-@pytest.fixture
-def session() -> Generator[Session, None, None]:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    session_factory = sessionmaker(bind=engine)
-    db_session = session_factory()
-    try:
-        yield db_session
-    finally:
-        db_session.close()
-        Base.metadata.drop_all(engine)
-        engine.dispose()
 
 
 @pytest.fixture
@@ -29,7 +12,7 @@ def repo(session: Session) -> ProjectRepository:
     return ProjectRepository(session)
 
 
-def make_project(
+def _make_project(
         project_id: UUID | None = None,
         name: str = "Arcane",
         repo_path: str = "/repos/arcane",
@@ -44,7 +27,7 @@ def make_project(
 
 
 def test_create_and_get_by_id(repo: ProjectRepository) -> None:
-    project = make_project()
+    project = _make_project()
 
     created = repo.create(project)
     result = repo.get_by_id(project.id)
@@ -58,8 +41,8 @@ def test_get_by_id_returns_none_when_not_found(repo: ProjectRepository) -> None:
 
 
 def test_get_all_returns_all_projects(repo: ProjectRepository) -> None:
-    first = make_project(name="Arcane")
-    second = make_project(name="Legion", repo_path="/repos/legion", default_branch="develop")
+    first = _make_project(name="Arcane")
+    second = _make_project(name="Legion", repo_path="/repos/legion", default_branch="develop")
     repo.create(first)
     repo.create(second)
 
@@ -69,7 +52,7 @@ def test_get_all_returns_all_projects(repo: ProjectRepository) -> None:
 
 
 def test_update_returns_updated_project(repo: ProjectRepository) -> None:
-    project = make_project()
+    project = _make_project()
     repo.create(project)
     updated = Project(
         id=project.id,
@@ -85,14 +68,14 @@ def test_update_returns_updated_project(repo: ProjectRepository) -> None:
 
 
 def test_update_raises_when_not_found(repo: ProjectRepository) -> None:
-    project = make_project()
+    project = _make_project()
 
     with pytest.raises(ValueError, match=f"Project {project.id} not found"):
         repo.update(project)
 
 
 def test_delete_removes_project(repo: ProjectRepository) -> None:
-    project = make_project()
+    project = _make_project()
     repo.create(project)
 
     repo.delete(project.id)

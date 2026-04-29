@@ -7,7 +7,7 @@ from domain.project.repository import AbstractProjectRepository
 from domain.project.service import ProjectService
 
 
-class FakeProjectRepository(AbstractProjectRepository):
+class _FakeProjectRepository(AbstractProjectRepository):
     def __init__(self) -> None:
         self._projects: dict[UUID, Project] = {}
 
@@ -30,12 +30,12 @@ class FakeProjectRepository(AbstractProjectRepository):
 
 
 @pytest.fixture
-def repo() -> FakeProjectRepository:
-    return FakeProjectRepository()
+def repo() -> _FakeProjectRepository:
+    return _FakeProjectRepository()
 
 
 @pytest.fixture
-def service(repo: FakeProjectRepository) -> ProjectService:
+def service(repo: _FakeProjectRepository) -> ProjectService:
     return ProjectService(repo)
 
 
@@ -43,13 +43,13 @@ def test_get_all_returns_empty(service: ProjectService) -> None:
     assert service.get_all() == []
 
 
-def test_get_all_returns_all(service: ProjectService, repo: FakeProjectRepository) -> None:
+def test_get_all_returns_all(service: ProjectService, repo: _FakeProjectRepository) -> None:
     repo.create(Project(id=uuid4(), name="A", repo_path="/a", default_branch="main"))
     repo.create(Project(id=uuid4(), name="B", repo_path="/b", default_branch="main"))
     assert len(service.get_all()) == 2
 
 
-def test_get_by_id_returns_project(service: ProjectService, repo: FakeProjectRepository) -> None:
+def test_get_by_id_returns_project(service: ProjectService, repo: _FakeProjectRepository) -> None:
     project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
     repo.create(project)
     assert service.get_by_id(project.id) == project
@@ -72,7 +72,7 @@ def test_create_ids_are_unique(service: ProjectService) -> None:
     assert p1.id != p2.id
 
 
-def test_update_returns_updated_project(service: ProjectService, repo: FakeProjectRepository) -> None:
+def test_update_returns_updated_project(service: ProjectService, repo: _FakeProjectRepository) -> None:
     project = Project(id=uuid4(), name="Old", repo_path="/old", default_branch="main")
     repo.create(project)
     updated = service.update(Project(id=project.id, name="New", repo_path="/new", default_branch="develop"))
@@ -86,7 +86,7 @@ def test_update_returns_none_when_not_found(service: ProjectService) -> None:
     assert service.update(Project(id=uuid4(), name="X", repo_path="/x", default_branch="main")) is None
 
 
-def test_delete_returns_true_when_deleted(service: ProjectService, repo: FakeProjectRepository) -> None:
+def test_delete_returns_true_when_deleted(service: ProjectService, repo: _FakeProjectRepository) -> None:
     project = Project(id=uuid4(), name="Arcane", repo_path="/repos/arcane", default_branch="main")
     repo.create(project)
     assert service.delete(project.id) is True
