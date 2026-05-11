@@ -1,7 +1,10 @@
 # ArcaneLegion
 
+ArcaneLegion is an agentic workflow platform where AI agents collaborate to execute engineering tasks on real codebases. Given a GitHub repository and a prompt, the platform spins up a pipeline of specialised agents — planner, coder, and reviewer — that work in sequence using LangGraph. Runs are queued and processed asynchronously by a background worker, with each run operating on a fresh clone of the target repository.
+
 ## Table of Contents
 
+- [Coding Principles](#coding-principles)
 - [Configuration](#configuration)
 - [Running the service](#running-the-service)
   - [Docker Compose setup](#docker-compose-setup)
@@ -12,6 +15,10 @@
   - [Inspecting PostgreSQL locally](#inspecting-postgresql-locally)
   - [Generating a new migration](#generating-a-new-migration)
   - [Running migrations manually](#running-migrations-manually)
+
+## Coding Principles
+
+Architectural decisions, layer boundaries, and coding conventions for this project are documented in [CLAUDE.md](CLAUDE.md). Contributors should read it before making changes.
 
 ## Configuration
 
