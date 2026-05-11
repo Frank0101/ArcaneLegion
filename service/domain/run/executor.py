@@ -53,7 +53,7 @@ class RunExecutor:
 
             def planner_action(_) -> ActionResult:
                 prompt = f"Task: {run.title}\n\n{run.description}"
-                output = self._agent_runtime.run(AgentRole.planner, prompt, workspace, project.default_branch)
+                output = self._agent_runtime.run(AgentRole.planner, prompt, workspace)
                 return ActionResult(output=output)
 
             def coder_action(so_far: ExecutionResult) -> ActionResult:

@@ -18,9 +18,10 @@ from data.session import create_session
 from domain.run.executor import RunExecutor
 from domain.run.worker import RunWorker
 from config import settings
+from infra.agent_runtime_resolver import AgentRuntimeResolver
+from infra.agent_runtimes.claude_code import ClaudeCodeAgentRuntime
 from infra.agent_runtimes.stub import StubAgentRuntime
 from infra.repo_manager_strategy import RepoManagerStrategy
-from infra.agent_runtime_strategy import AgentRuntimeStrategy
 from infra.lang_graph.lang_graph_manager import LangGraphManager
 from infra.repo_managers.github import GitHubRepoManager
 
@@ -34,7 +35,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
         RunExecutor(
             LangGraphManager(),
             ProjectRepository(session),
-            AgentRuntimeStrategy([StubAgentRuntime()]),
+            AgentRuntimeResolver(claude_code=ClaudeCodeAgentRuntime(), stub=StubAgentRuntime()),
             RepoManagerStrategy([GitHubRepoManager(settings.github_token)]),
             settings.workspace_base_path,
         ),

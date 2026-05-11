@@ -2,10 +2,10 @@ import base64
 import subprocess
 from pathlib import Path
 
-from infra.repo_manager_strategy import AbstractRepoManagerStrategy
+from infra.repo_manager_strategy import AbstractRepoManagerAdapter
 
 
-class GitHubRepoManager(AbstractRepoManagerStrategy):
+class GitHubRepoManager(AbstractRepoManagerAdapter):
     def __init__(self, token: str | None) -> None:
         self._token = token
 

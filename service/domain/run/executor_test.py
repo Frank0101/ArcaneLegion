@@ -82,7 +82,7 @@ class _RaisingWorkspaceObservingRepoManager(_WorkspaceObservingRepoManager):
 
 
 class _FakeAgentRuntime(AbstractAgentRuntime):
-    def run(self, role: AgentRole, prompt: str, repo_path: str, branch: str) -> str:
+    def run(self, role: AgentRole, prompt: str, workspace: str) -> str:
         return "fake plan"
 
 
@@ -90,12 +90,12 @@ class _CapturingAgentRuntime(AbstractAgentRuntime):
     def __init__(self) -> None:
         self.role: AgentRole | None = None
         self.prompt: str | None = None
-        self.branch: str | None = None
+        self.workspace: str | None = None
 
-    def run(self, role: AgentRole, prompt: str, repo_path: str, branch: str) -> str:
+    def run(self, role: AgentRole, prompt: str, workspace: str) -> str:
         self.role = role
         self.prompt = prompt
-        self.branch = branch
+        self.workspace = workspace
         return "captured"
 
 
@@ -267,4 +267,4 @@ def test_execute_calls_planner_with_correct_role_and_prompt(
 
     assert runtime.role == AgentRole.planner
     assert runtime.prompt == "Task: Fix login bug\n\nUsers cannot log in"
-    assert runtime.branch == "main"
+    assert runtime.workspace is not None

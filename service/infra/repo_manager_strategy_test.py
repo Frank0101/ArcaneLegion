@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from infra.repo_manager_strategy import AbstractRepoManagerStrategy, RepoManagerStrategy
+from infra.repo_manager_strategy import AbstractRepoManagerAdapter, RepoManagerStrategy
 
 
-class _MatchingManager(AbstractRepoManagerStrategy):
+class _MatchingManager(AbstractRepoManagerAdapter):
     def __init__(self) -> None:
         self.called = False
 
@@ -17,7 +17,7 @@ class _MatchingManager(AbstractRepoManagerStrategy):
         self.called = True
 
 
-class _NonMatchingManager(AbstractRepoManagerStrategy):
+class _NonMatchingManager(AbstractRepoManagerAdapter):
     @staticmethod
     def can_handle(repo_url: str) -> bool:
         return False
