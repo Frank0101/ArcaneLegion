@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import TypedDict
 
-from langgraph.graph import END, StateGraph
+from langgraph.graph import END, START, StateGraph
 
 from domain.run.graph_manager import AbstractGraphManager
 from domain.run.models import ActionResult, Agent, AgentRole, ExecutionResult
@@ -28,7 +28,7 @@ def _build_graph(agent: Agent) -> StateGraph:
     while current is not None:
         builder.add_node(current.role.value, _wrap(current))
         if prev_name is None:
-            builder.set_entry_point(current.role.value)
+            builder.add_edge(START, current.role.value)
         else:
             builder.add_edge(prev_name, current.role.value)
         prev_name = current.role.value
