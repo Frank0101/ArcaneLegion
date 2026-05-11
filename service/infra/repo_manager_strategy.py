@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from pathlib import Path
 
 from domain.run.repo_manager import AbstractRepoManager
 
@@ -14,9 +13,9 @@ class RepoManagerStrategy(AbstractRepoManager):
     def __init__(self, managers: list[AbstractRepoManagerAdapter]) -> None:
         self._managers = managers
 
-    def clone(self, repo_url: str, branch: str, dest: Path) -> None:
+    def clone(self, repo_url: str, branch: str, workspace: str) -> None:
         for manager in self._managers:
             if manager.can_handle(repo_url):
-                manager.clone(repo_url, branch, dest)
+                manager.clone(repo_url, branch, workspace)
                 return
         raise ValueError(f"No manager available for {repo_url}")

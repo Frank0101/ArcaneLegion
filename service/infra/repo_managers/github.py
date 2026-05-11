@@ -1,6 +1,5 @@
 import base64
 import subprocess
-from pathlib import Path
 
 from infra.repo_manager_strategy import AbstractRepoManagerAdapter
 
@@ -13,7 +12,7 @@ class GitHubRepoManager(AbstractRepoManagerAdapter):
     def can_handle(repo_url: str) -> bool:
         return "github.com" in repo_url
 
-    def clone(self, repo_url: str, branch: str, dest: Path) -> None:
+    def clone(self, repo_url: str, branch: str, workspace: str) -> None:
         if self._token is None:
             raise ValueError("GITHUB_TOKEN is not configured")
 
@@ -24,7 +23,7 @@ class GitHubRepoManager(AbstractRepoManagerAdapter):
         try:
             subprocess.run([
                 "git", "-c", f"http.extraHeader=Authorization: Basic {credentials}",
-                "clone", "--branch", branch, "--single-branch", repo_url, str(dest),
+                "clone", "--branch", branch, "--single-branch", repo_url, workspace,
             ],
                 check=True,
                 capture_output=True,

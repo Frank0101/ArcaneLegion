@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from infra.repo_manager_strategy import AbstractRepoManagerAdapter, RepoManagerStrategy
@@ -13,7 +11,7 @@ class _MatchingManager(AbstractRepoManagerAdapter):
     def can_handle(repo_url: str) -> bool:
         return True
 
-    def clone(self, repo_url: str, branch: str, dest: Path) -> None:
+    def clone(self, repo_url: str, branch: str, workspace: str) -> None:
         self.called = True
 
 
@@ -22,18 +20,18 @@ class _NonMatchingManager(AbstractRepoManagerAdapter):
     def can_handle(repo_url: str) -> bool:
         return False
 
-    def clone(self, repo_url: str, branch: str, dest: Path) -> None:
+    def clone(self, repo_url: str, branch: str, workspace: str) -> None:
         raise AssertionError("should not be called")
 
 
-def test_clone_delegates_to_matching_manager(tmp_path: Path) -> None:
+def test_clone_delegates_to_matching_manager() -> None:
     manager = _MatchingManager()
 
-    RepoManagerStrategy([manager]).clone("https://example.com/repo", "main", tmp_path)
+    RepoManagerStrategy([manager]).clone("https://example.com/repo", "main", "/workspace")
 
     assert manager.called is True
 
 
-def test_clone_raises_when_no_manager_matches(tmp_path: Path) -> None:
+def test_clone_raises_when_no_manager_matches() -> None:
     with pytest.raises(ValueError, match="https://example.com/repo"):
-        RepoManagerStrategy([_NonMatchingManager()]).clone("https://example.com/repo", "main", tmp_path)
+        RepoManagerStrategy([_NonMatchingManager()]).clone("https://example.com/repo", "main", "/workspace")

@@ -48,8 +48,8 @@ class RunExecutor:
         with tempfile.TemporaryDirectory(prefix=f"{str(run.id)}_", dir=self._workspace_base_path) as workspace:
             logger.info("Temporary workspace created: %s", workspace)
 
-            self._repo_manager.clone(project.repo_path, project.default_branch, Path(workspace))
-            logger.info("Repo cloned to workspace: %s branch=%s", project.repo_path, project.default_branch)
+            self._repo_manager.clone(project.repo_path, project.default_branch, workspace)
+            logger.info("Repo %s (branch=%s) cloned to workspace", project.repo_path, project.default_branch)
 
             def planner_action(_) -> ActionResult:
                 prompt = f"Task: {run.title}\n\n{run.description}"
