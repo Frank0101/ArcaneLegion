@@ -41,7 +41,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
                 playbooks_path=Path(__file__).parent / "domain" / "run" / "playbooks",
                 claude_code_api=ClaudeCodeApiAgentRuntime(settings.anthropic_api_key),
                 claude_code_sub=ClaudeCodeSubAgentRuntime(),
-                codex_api=CodexApiAgentRuntime(settings.openai_api_key),
+                codex_api=CodexApiAgentRuntime(settings.openai_api_key, settings.workspace_base_path),
                 stub=StubAgentRuntime(),
             ),
             RepoManagerStrategy([GitHubRepoManager(settings.github_token)]),
