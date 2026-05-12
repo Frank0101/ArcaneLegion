@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+set -a
+source "$(dirname "$0")/.env"
+set +a
+
 # Override .env's DATABASE_URL (which uses the Docker-internal host "postgres") with localhost,
 # since alembic and uvicorn run on the host machine and reach the container via the mapped port.
 export DATABASE_URL=postgresql+psycopg://arcane:arcane@localhost:5432/arcane_legion

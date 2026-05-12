@@ -11,6 +11,8 @@ from infra.agent_runtime_resolver import AbstractAgentRuntimeAdapter
 #   1. Install the Claude CLI: https://claude.ai/download
 #   2. Log in with your subscription: `claude auth login`
 #      Credentials are stored in the macOS Keychain and picked up automatically at runtime.
+#      Because the Keychain is not accessible inside Docker, this runtime only works when the
+#      service is run locally via dev-start.sh.
 class ClaudeCodeSubAgentRuntime(AbstractAgentRuntimeAdapter):
     def run(self, prompt: str, workspace: str) -> str:
 
