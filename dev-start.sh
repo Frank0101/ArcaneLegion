@@ -1,7 +1,17 @@
 #!/bin/bash
 set -e
 
+# Override .env's DATABASE_URL (which uses the Docker-internal host "postgres") with localhost,
+# since alembic and uvicorn run on the host machine and reach the container via the mapped port.
 export DATABASE_URL=postgresql+psycopg://arcane:arcane@localhost:5432/arcane_legion
+
+echo "==> Checking dependencies..."
+for cmd in docker python3 git node npm claude; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: '$cmd' is not installed or not in PATH" >&2
+        exit 1
+    fi
+done
 
 echo "==> Starting PostgreSQL..."
 docker compose up postgres -d --wait

@@ -87,6 +87,16 @@ Unlike Docker Compose, running locally does not automatically start PostgreSQL o
 ./dev-start.sh
 ```
 
+The script manages the Python environment and database setup, but the following tools must already be installed and accessible on your machine — this is your responsibility:
+
+| Tool | Purpose |
+|---|---|
+| `docker` | Runs the PostgreSQL container |
+| `python3` | Creates the virtual environment |
+| `git` | Used by the agent at runtime to clone repositories |
+| `node` / `npm` | Required by the Claude Code CLI |
+| `claude` (`@anthropic-ai/claude-code`) | Agent runtime |
+
 The service will be available at `http://localhost:8000`. Health check: `GET /health`.
 
 ## Running the tests
