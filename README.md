@@ -32,6 +32,7 @@ The service requires the following environment variables:
 | `DATABASE_URL` | yes | — | PostgreSQL connection string |
 | `GITHUB_TOKEN` | no | — | GitHub PAT. Requires: Contents (read and write), Pull requests (write). |
 | `ANTHROPIC_API_KEY` | no | — | Anthropic API key. Create one at console.anthropic.com under API Keys. |
+| `OPENAI_API_KEY` | no | — | OpenAI API key. Create one at platform.openai.com under API Keys. |
 | `WORKER_POLL_INTERVAL` | no | `5.0` | Seconds between worker poll cycles |
 | `WORKSPACE_BASE_PATH` | no | `.workspaces` | Directory for temporary run workspaces |
 
@@ -44,6 +45,7 @@ POSTGRES_DB=arcane_legion
 DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
 GITHUB_TOKEN={{token}}
 ANTHROPIC_API_KEY={{key}}
+OPENAI_API_KEY={{key}}
 ```
 
 In production, inject the real values via your environment or secrets manager (e.g. AWS Secrets Manager).
@@ -96,6 +98,7 @@ The script manages the Python environment and database setup, but the following 
 | `git` | Used by the agent at runtime to clone repositories |
 | `node` / `npm` | Required by the Claude Code CLI |
 | `claude` (`@anthropic-ai/claude-code`) | Agent runtime |
+| `codex` (`@openai/codex`) | Agent runtime |
 
 The service will be available at `http://localhost:8000`. Health check: `GET /health`.
 

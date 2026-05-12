@@ -10,7 +10,7 @@ set +a
 export DATABASE_URL=postgresql+psycopg://arcane:arcane@localhost:5432/arcane_legion
 
 echo "==> Checking dependencies..."
-for cmd in docker python3 git node npm claude; do
+for cmd in docker python3 git node npm claude codex; do
     if ! command -v "$cmd" &> /dev/null; then
         echo "Error: '$cmd' is not installed or not in PATH" >&2
         exit 1

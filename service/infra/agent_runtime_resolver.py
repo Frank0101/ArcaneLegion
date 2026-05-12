@@ -16,10 +16,12 @@ class AgentRuntimeResolver(AbstractAgentRuntime):
             playbooks_path: Path,
             claude_code_api: AbstractAgentRuntimeAdapter,
             claude_code_sub: AbstractAgentRuntimeAdapter,
+            codex_api: AbstractAgentRuntimeAdapter,
             stub: AbstractAgentRuntimeAdapter,
     ) -> None:
         self._claude_code_api = claude_code_api
         self._claude_code_sub = claude_code_sub
+        self._codex_api = codex_api
         self._stub = stub
 
         self._playbooks: dict[AgentRole, str] = {

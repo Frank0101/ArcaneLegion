@@ -21,6 +21,7 @@ from config import settings
 from infra.agent_runtime_resolver import AgentRuntimeResolver
 from infra.agent_runtimes.claude_code_api import ClaudeCodeApiAgentRuntime
 from infra.agent_runtimes.claude_code_sub import ClaudeCodeSubAgentRuntime
+from infra.agent_runtimes.codex_api import CodexApiAgentRuntime
 from infra.agent_runtimes.stub import StubAgentRuntime
 from infra.repo_manager_strategy import RepoManagerStrategy
 from infra.lang_graph.lang_graph_manager import LangGraphManager
@@ -40,6 +41,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
                 playbooks_path=Path(__file__).parent / "domain" / "run" / "playbooks",
                 claude_code_api=ClaudeCodeApiAgentRuntime(settings.anthropic_api_key),
                 claude_code_sub=ClaudeCodeSubAgentRuntime(),
+                codex_api=CodexApiAgentRuntime(settings.openai_api_key),
                 stub=StubAgentRuntime(),
             ),
             RepoManagerStrategy([GitHubRepoManager(settings.github_token)]),
