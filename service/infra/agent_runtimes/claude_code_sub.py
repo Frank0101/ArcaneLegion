@@ -14,7 +14,7 @@ class ClaudeCodeSubAgentRuntime(AbstractAgentRuntimeAdapter):
         env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
         try:
             result = subprocess.run(
-                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5",
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "10",
                  "--max-budget-usd", "1.0", "--effort", "medium", instructions],
                 cwd=workspace,
                 env=env,
