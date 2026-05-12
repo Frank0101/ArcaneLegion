@@ -21,7 +21,8 @@ class ClaudeCodeSubAgentRuntime(AbstractAgentRuntimeAdapter):
         env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
         try:
             result = subprocess.run(
-                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", instructions],
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "4",
+                 "--max-budget-usd", "0.3", "--effort", "low", instructions],
                 cwd=workspace,
                 env=env,
                 check=True,
@@ -30,4 +31,5 @@ class ClaudeCodeSubAgentRuntime(AbstractAgentRuntimeAdapter):
             )
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"claude failed (exit {e.returncode}): {e.stderr.strip()}") from None
+            detail = (e.stderr or e.stdout or "").strip()
+            raise RuntimeError(f"claude failed (exit {e.returncode}): {detail}") from None

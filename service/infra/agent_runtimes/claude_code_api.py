@@ -13,7 +13,8 @@ class ClaudeCodeApiAgentRuntime(AbstractAgentRuntimeAdapter):
             raise ValueError("ANTHROPIC_API_KEY is not configured")
         try:
             result = subprocess.run(
-                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", instructions],
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "4",
+                 "--max-budget-usd", "0.3", "--effort", "low", instructions],
                 cwd=workspace,
                 env=os.environ | {"ANTHROPIC_API_KEY": self._api_key},
                 check=True,
@@ -22,9 +23,5 @@ class ClaudeCodeApiAgentRuntime(AbstractAgentRuntimeAdapter):
             )
             return result.stdout
         except subprocess.CalledProcessError as e:
-            stderr = (
-                (e.stderr or "")
-                .strip()
-                .replace(self._api_key, "***")
-            )
-            raise RuntimeError(f"claude failed (exit {e.returncode}): {stderr}") from None
+            detail = (e.stderr or e.stdout or "").strip().replace(self._api_key, "***")
+            raise RuntimeError(f"claude failed (exit {e.returncode}): {detail}") from None

@@ -15,7 +15,8 @@ def test_run_invokes_claude_with_prompt_and_workspace() -> None:
         result = ClaudeCodeSubAgentRuntime().run("do the thing", "/workspace")
 
     mock_run.assert_called_once_with(
-        ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", "do the thing"],
+        ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "4",
+         "--max-budget-usd", "0.3", "--effort", "low", "do the thing"],
         cwd="/workspace",
         env={"PATH": "/usr/bin"},
         check=True,
@@ -37,8 +38,12 @@ def test_run_strips_api_key_from_environment() -> None:
     assert "ANTHROPIC_API_KEY" not in env_passed
 
 
-def test_run_failure_raises_runtime_error() -> None:
-    failure = subprocess.CalledProcessError(1, [], stderr="auth error")
+@pytest.mark.parametrize("stderr,stdout", [
+    ("auth error", ""),
+    ("", "auth error"),
+])
+def test_run_failure_raises_runtime_error(stderr: str, stdout: str) -> None:
+    failure = subprocess.CalledProcessError(1, [], output=stdout, stderr=stderr)
     with patch("subprocess.run", side_effect=failure):
         with pytest.raises(RuntimeError, match="claude failed"):
             ClaudeCodeSubAgentRuntime().run("do the thing", "/workspace")

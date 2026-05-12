@@ -30,10 +30,10 @@ class GitHubRepoManager(AbstractRepoManagerAdapter):
                 text=True,
             )
         except subprocess.CalledProcessError as e:
-            stderr = (
+            detail = (
                 (e.stderr or "")
                 .strip()
                 .replace(credentials, "***")
                 .replace(self._token, "***")
             )
-            raise RuntimeError(f"git clone failed (exit {e.returncode}): {stderr}") from None
+            raise RuntimeError(f"git clone failed (exit {e.returncode}): {detail}") from None
