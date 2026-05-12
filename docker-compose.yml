@@ -45,6 +45,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=${DATABASE_URL}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on:
       migrate:
         condition: service_completed_successfully

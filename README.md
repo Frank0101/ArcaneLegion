@@ -31,6 +31,7 @@ The service requires the following environment variables:
 | `POSTGRES_DB` | yes | — | PostgreSQL database name |
 | `DATABASE_URL` | yes | — | PostgreSQL connection string |
 | `GITHUB_TOKEN` | no | — | GitHub PAT. Requires: Contents (read and write), Pull requests (write). |
+| `ANTHROPIC_API_KEY` | no | — | Anthropic API key. Create one at console.anthropic.com under API Keys. |
 | `WORKER_POLL_INTERVAL` | no | `5.0` | Seconds between worker poll cycles |
 | `WORKSPACE_BASE_PATH` | no | `.workspaces` | Directory for temporary run workspaces |
 
@@ -42,6 +43,7 @@ POSTGRES_PASSWORD=arcane
 POSTGRES_DB=arcane_legion
 DATABASE_URL=postgresql+psycopg://arcane:arcane@postgres:5432/arcane_legion
 GITHUB_TOKEN={{token}}
+ANTHROPIC_API_KEY={{key}}
 ```
 
 In production, inject the real values via your environment or secrets manager (e.g. AWS Secrets Manager).

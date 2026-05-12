@@ -117,9 +117,28 @@ python -m alembic revision --autogenerate -m "short description"
 
 This must be run from `service/` with `DATABASE_URL` set and the database reachable.
 
+## Configuration injection
+
+Configurable values are injected via the constructor, never read from `settings` inside components. This keeps components testable without a running environment.
+
+1. **`config.py`** — add an optional field to `Settings` with a `| None` default:
+   ```python
+   some_value: str | None = None
+   ```
+2. **`docker-compose.yml`** — forward the variable from the host environment into the container:
+   ```yaml
+   - SOME_VALUE=${SOME_VALUE}
+   ```
+3. **Constructor injection** — pass `settings.some_value` to the component at the composition root (`main.py`). The component stores it as `self._some_value`.
+4. **Guard at use-time** — raise `ValueError` if the value is `None` when the operation is attempted:
+   ```python
+   if self._some_value is None:
+       raise ValueError("SOME_VALUE is not configured")
+   ```
+
 ## Secrets handling
 
-Never embed secrets (tokens, passwords, API keys) in URLs or subprocess command arguments — they leak into logs and tracebacks via `CalledProcessError.cmd`. Pass them via environment variables or HTTP headers instead.
+Secrets (tokens, passwords, API keys) follow the same injection pattern above. Additionally, never embed them in URLs or subprocess command arguments — they leak into logs and tracebacks via `CalledProcessError.cmd`. Pass them via environment variables or HTTP headers instead.
 
 When wrapping a subprocess call that uses a secret, catch `CalledProcessError` and re-raise a sanitised `RuntimeError`: use `text=True` so `e.stderr` is already a string, replace every sensitive value with `***` (both derived forms like base64 and the raw token), and use `from None` to suppress the original exception (which carries the command in `.cmd`).
 

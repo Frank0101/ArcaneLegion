@@ -35,7 +35,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
         RunExecutor(
             LangGraphManager(),
             ProjectRepository(session),
-            AgentRuntimeResolver(claude_code=ClaudeCodeAgentRuntime(), stub=StubAgentRuntime()),
+            AgentRuntimeResolver(claude_code=ClaudeCodeAgentRuntime(settings.anthropic_api_key),
+                                 stub=StubAgentRuntime()),
             RepoManagerStrategy([GitHubRepoManager(settings.github_token)]),
             settings.workspace_base_path,
         ),
