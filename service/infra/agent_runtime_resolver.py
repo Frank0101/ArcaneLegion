@@ -32,7 +32,7 @@ class AgentRuntimeResolver(AbstractAgentRuntime):
     def run(self, role: AgentRole, prompt: str, workspace: str) -> str:
         match role:
             case AgentRole.planner:
-                runtime = self._claude_code_api
+                runtime = self._claude_code_sub
             case _:
                 runtime = self._stub
 

@@ -36,13 +36,13 @@ def _make_resolver(
     )
 
 
-def test_planner_role_delegates_to_claude_code_api_adapter(tmp_path: Path) -> None:
-    claude_code_api = _CapturingAdapter()
-    resolver = _make_resolver(claude_code_api, _FakeAdapter(), _FakeAdapter(), _FakeAdapter(), tmp_path)
+def test_planner_role_delegates_to_claude_code_sub_adapter(tmp_path: Path) -> None:
+    claude_code_sub = _CapturingAdapter()
+    resolver = _make_resolver(_FakeAdapter(), claude_code_sub, _FakeAdapter(), _FakeAdapter(), tmp_path)
 
     resolver.run(AgentRole.planner, "prompt", "/workspace")
 
-    assert claude_code_api.workspace == "/workspace"
+    assert claude_code_sub.workspace == "/workspace"
 
 
 def test_non_planner_role_delegates_to_stub_adapter(tmp_path: Path) -> None:
@@ -57,7 +57,7 @@ def test_non_planner_role_delegates_to_stub_adapter(tmp_path: Path) -> None:
 def test_playbook_is_prepended_to_prompt(tmp_path: Path) -> None:
     (tmp_path / "planner.md").write_text("playbook instructions")
     adapter = _CapturingAdapter()
-    resolver = _make_resolver(adapter, _FakeAdapter(), _FakeAdapter(), _FakeAdapter(), tmp_path)
+    resolver = _make_resolver(_FakeAdapter(), adapter, _FakeAdapter(), _FakeAdapter(), tmp_path)
 
     resolver.run(AgentRole.planner, "task prompt", "/workspace")
 
@@ -66,7 +66,7 @@ def test_playbook_is_prepended_to_prompt(tmp_path: Path) -> None:
 
 def test_prompt_has_empty_playbook_prefix_when_no_playbook(tmp_path: Path) -> None:
     adapter = _CapturingAdapter()
-    resolver = _make_resolver(adapter, _FakeAdapter(), _FakeAdapter(), _FakeAdapter(), tmp_path)
+    resolver = _make_resolver(_FakeAdapter(), adapter, _FakeAdapter(), _FakeAdapter(), tmp_path)
 
     resolver.run(AgentRole.planner, "task prompt", "/workspace")
 
