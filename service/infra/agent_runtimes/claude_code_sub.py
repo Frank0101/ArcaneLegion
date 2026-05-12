@@ -14,14 +14,14 @@ from infra.agent_runtime_resolver import AbstractAgentRuntimeAdapter
 #      Because the Keychain is not accessible inside Docker, this runtime only works when the
 #      service is run locally via dev-start.sh.
 class ClaudeCodeSubAgentRuntime(AbstractAgentRuntimeAdapter):
-    def run(self, prompt: str, workspace: str) -> str:
+    def run(self, instructions: str, workspace: str) -> str:
 
         # The CLI chooses between API and subscription based solely on the presence of ANTHROPIC_API_KEY.
         # Stripping it ensures the subscription credentials (stored in the system keychain) are always used.
         env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
         try:
             result = subprocess.run(
-                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "15", prompt],
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", instructions],
                 cwd=workspace,
                 env=env,
                 check=True,

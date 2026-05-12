@@ -15,7 +15,7 @@ def test_run_invokes_claude_with_prompt_and_workspace() -> None:
         result = ClaudeCodeSubAgentRuntime().run("do the thing", "/workspace")
 
     mock_run.assert_called_once_with(
-        ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "15", "do the thing"],
+        ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", "do the thing"],
         cwd="/workspace",
         env={"PATH": "/usr/bin"},
         check=True,

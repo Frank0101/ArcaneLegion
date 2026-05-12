@@ -57,7 +57,7 @@ class RunExecutor:
                         project.default_branch)
 
             def planner_action(_) -> ActionResult:
-                prompt = f"# Task: {run.title}\n{run.description}"
+                prompt = f"# Task: {run.title}\n\n{run.description}"
                 logger.debug("%s\n\n--- prompt ---\n%s", prefix, prompt)
 
                 output = self._agent_runtime.run(AgentRole.planner, prompt, workspace)

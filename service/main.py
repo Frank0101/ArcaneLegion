@@ -37,6 +37,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
             LangGraphManager(),
             ProjectRepository(session),
             AgentRuntimeResolver(
+                playbooks_path=Path(__file__).parent / "domain" / "run" / "playbooks",
                 claude_code_api=ClaudeCodeApiAgentRuntime(settings.anthropic_api_key),
                 claude_code_sub=ClaudeCodeSubAgentRuntime(),
                 stub=StubAgentRuntime(),

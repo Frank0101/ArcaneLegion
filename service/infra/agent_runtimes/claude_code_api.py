@@ -8,12 +8,12 @@ class ClaudeCodeApiAgentRuntime(AbstractAgentRuntimeAdapter):
     def __init__(self, api_key: str | None) -> None:
         self._api_key = api_key
 
-    def run(self, prompt: str, workspace: str) -> str:
+    def run(self, instructions: str, workspace: str) -> str:
         if self._api_key is None:
             raise ValueError("ANTHROPIC_API_KEY is not configured")
         try:
             result = subprocess.run(
-                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "15", prompt],
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "5", instructions],
                 cwd=workspace,
                 env=os.environ | {"ANTHROPIC_API_KEY": self._api_key},
                 check=True,

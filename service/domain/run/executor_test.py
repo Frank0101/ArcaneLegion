@@ -266,5 +266,5 @@ def test_execute_calls_planner_with_correct_role_and_prompt(
     _make_executor(_ActionExecutingGraphManager(), project, workspace_base_path, runtime=runtime).execute(run)
 
     assert runtime.role == AgentRole.planner
-    assert runtime.prompt == "# Task: Fix login bug\nUsers cannot log in"
+    assert runtime.prompt == "# Task: Fix login bug\n\nUsers cannot log in"
     assert runtime.workspace is not None
