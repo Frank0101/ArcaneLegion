@@ -13,14 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 def _logged(
+        prefix: str,
         role: AgentRole,
         action: Callable[[ExecutionResult], ActionResult],
 ) -> Callable[[ExecutionResult], ActionResult]:
     def wrapped(so_far: ExecutionResult) -> ActionResult:
-        logger.info("Agent %s starting", role.value)
+        logger.info("%s Agent %s starting", prefix, role.value)
         result = action(so_far)
-        logger.info("Agent %s completed\nPrompt: %s\nOutput: %s",
-                    role.value, result.prompt, result.output)
+        logger.info("%s Agent %s completed", prefix, role.value)
+        logger.debug("%s\n\n--- output ---\n%s", prefix, result.output)
         return result
 
     return wrapped
@@ -46,14 +47,19 @@ class RunExecutor:
         if project is None:
             raise ValueError(f"Project {run.project_id} not found")
 
+        prefix = f"[run:{str(run.id)[:8]}]"
+
         with tempfile.TemporaryDirectory(prefix=f"{str(run.id)}_", dir=self._workspace_base_path) as workspace:
-            logger.info("Temporary workspace created: %s", workspace)
+            logger.info("%s Temporary workspace created: %s", prefix, workspace)
 
             self._repo_manager.clone(project.repo_path, project.default_branch, workspace)
-            logger.info("Repo %s (branch=%s) cloned to workspace", project.repo_path, project.default_branch)
+            logger.info("%s Repo %s (branch=%s) cloned to workspace", prefix, project.repo_path,
+                        project.default_branch)
 
             def planner_action(_) -> ActionResult:
-                prompt = f"Task: {run.title}\n\n{run.description}"
+                prompt = f"# Task: {run.title}\n{run.description}"
+                logger.debug("%s\n\n--- prompt ---\n%s", prefix, prompt)
+
                 output = self._agent_runtime.run(AgentRole.planner, prompt, workspace)
                 return ActionResult(prompt=prompt, output=output)
 
@@ -65,13 +71,13 @@ class RunExecutor:
 
             return self._graph_manager.execute_graph(Agent(
                 role=AgentRole.planner,
-                action=_logged(AgentRole.planner, planner_action),
+                action=_logged(prefix, AgentRole.planner, planner_action),
                 next=Agent(
                     role=AgentRole.coder,
-                    action=_logged(AgentRole.coder, coder_action),
+                    action=_logged(prefix, AgentRole.coder, coder_action),
                     next=Agent(
                         role=AgentRole.reviewer,
-                        action=_logged(AgentRole.reviewer, reviewer_action),
+                        action=_logged(prefix, AgentRole.reviewer, reviewer_action),
                     )
                 )
             ))

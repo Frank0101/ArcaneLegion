@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s %(name)s %(levelname)s: %(message)s")
 
 from api.routes.health import router as health_router
