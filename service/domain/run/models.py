@@ -33,6 +33,7 @@ class Run:
 
 @dataclass
 class ActionResult:
+    prompt: str
     output: str
     approved: bool | None = None
 

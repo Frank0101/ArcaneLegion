@@ -18,19 +18,20 @@ class _FakeAdapter(AbstractAgentRuntimeAdapter):
         return "stub output"
 
 
-def test_planner_role_delegates_to_claude_code_adapter() -> None:
-    claude_code = _CapturingAdapter()
-    resolver = AgentRuntimeResolver(claude_code=claude_code, stub=_FakeAdapter())
+def test_planner_role_delegates_to_claude_code_api_adapter() -> None:
+    claude_code_api = _CapturingAdapter()
+    resolver = AgentRuntimeResolver(claude_code_api=claude_code_api, claude_code_sub=_FakeAdapter(),
+                                    stub=_FakeAdapter())
 
     resolver.run(AgentRole.planner, "prompt", "/workspace")
 
-    assert claude_code.prompt == "prompt"
-    assert claude_code.workspace == "/workspace"
+    assert claude_code_api.prompt == "prompt"
+    assert claude_code_api.workspace == "/workspace"
 
 
 def test_non_planner_role_delegates_to_stub_adapter() -> None:
     stub = _CapturingAdapter()
-    resolver = AgentRuntimeResolver(claude_code=_FakeAdapter(), stub=stub)
+    resolver = AgentRuntimeResolver(claude_code_api=_FakeAdapter(), claude_code_sub=_FakeAdapter(), stub=stub)
 
     resolver.run(AgentRole.coder, "prompt", "/workspace")
 

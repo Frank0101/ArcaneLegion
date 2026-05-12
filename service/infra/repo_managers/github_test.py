@@ -39,6 +39,13 @@ def test_clone_calls_git_with_auth_header() -> None:
     )
 
 
+def test_clone_failure_raises_runtime_error() -> None:
+    failure = subprocess.CalledProcessError(128, [], stderr="remote: Repository not found")
+    with patch("subprocess.run", side_effect=failure):
+        with pytest.raises(RuntimeError, match="git clone failed"):
+            GitHubRepoManager(_TOKEN).clone(_REPO_URL, "main", "/workspace")
+
+
 @pytest.mark.parametrize("secret", [_TOKEN, _CREDENTIALS])
 def test_clone_failure_does_not_expose_secret(secret: str) -> None:
     failure = subprocess.CalledProcessError(

@@ -12,16 +12,18 @@ class AbstractAgentRuntimeAdapter(ABC):
 class AgentRuntimeResolver(AbstractAgentRuntime):
     def __init__(
             self,
-            claude_code: AbstractAgentRuntimeAdapter,
+            claude_code_api: AbstractAgentRuntimeAdapter,
+            claude_code_sub: AbstractAgentRuntimeAdapter,
             stub: AbstractAgentRuntimeAdapter,
     ) -> None:
-        self._claude_code = claude_code
+        self._claude_code_api = claude_code_api
+        self._claude_code_sub = claude_code_sub
         self._stub = stub
 
     def run(self, role: AgentRole, prompt: str, workspace: str) -> str:
         match role:
             case AgentRole.planner:
-                runtime = self._claude_code
+                runtime = self._claude_code_api
             case _:
                 runtime = self._stub
         return runtime.run(prompt, workspace)

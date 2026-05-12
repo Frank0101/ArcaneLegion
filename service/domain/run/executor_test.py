@@ -143,7 +143,7 @@ def test_execute_returns_graph_manager_result(
     project = make_project()
     run = make_run(project_id=project.id)
     expected = ExecutionResult(action_results={
-        AgentRole.reviewer: ActionResult(output="done", approved=True)
+        AgentRole.reviewer: ActionResult(prompt="", output="done", approved=True)
     })
     manager = _CapturingGraphManager(expected)
 

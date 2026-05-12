@@ -4,7 +4,7 @@ import subprocess
 from infra.agent_runtime_resolver import AbstractAgentRuntimeAdapter
 
 
-class ClaudeCodeAgentRuntime(AbstractAgentRuntimeAdapter):
+class ClaudeCodeApiAgentRuntime(AbstractAgentRuntimeAdapter):
     def __init__(self, api_key: str | None) -> None:
         self._api_key = api_key
 
@@ -13,7 +13,7 @@ class ClaudeCodeAgentRuntime(AbstractAgentRuntimeAdapter):
             raise ValueError("ANTHROPIC_API_KEY is not configured")
         try:
             result = subprocess.run(
-                ["claude", "--print", prompt],
+                ["claude", "--print", "--model", "claude-sonnet-4-6", "--max-turns", "15", prompt],
                 cwd=workspace,
                 env=os.environ | {"ANTHROPIC_API_KEY": self._api_key},
                 check=True,

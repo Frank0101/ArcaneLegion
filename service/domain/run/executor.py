@@ -19,7 +19,8 @@ def _logged(
     def wrapped(so_far: ExecutionResult) -> ActionResult:
         logger.info("Agent %s starting", role.value)
         result = action(so_far)
-        logger.info("Agent %s completed", role.value)
+        logger.info("Agent %s completed\nPrompt: %s\nOutput: %s",
+                    role.value, result.prompt, result.output)
         return result
 
     return wrapped
@@ -54,13 +55,13 @@ class RunExecutor:
             def planner_action(_) -> ActionResult:
                 prompt = f"Task: {run.title}\n\n{run.description}"
                 output = self._agent_runtime.run(AgentRole.planner, prompt, workspace)
-                return ActionResult(output=output)
+                return ActionResult(prompt=prompt, output=output)
 
             def coder_action(so_far: ExecutionResult) -> ActionResult:
-                return ActionResult(output=f"Implemented fake task for run title '{run.title}'")
+                return ActionResult(prompt="", output=f"Implemented fake task for run title '{run.title}'")
 
             def reviewer_action(so_far: ExecutionResult) -> ActionResult:
-                return ActionResult(output="Approved fake implementation", approved=True)
+                return ActionResult(prompt="", output="Approved fake implementation", approved=True)
 
             return self._graph_manager.execute_graph(Agent(
                 role=AgentRole.planner,

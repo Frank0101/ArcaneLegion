@@ -5,10 +5,10 @@ from infra.lang_graph.lang_graph_manager import LangGraphManager
 def test_all_agent_results_are_collected() -> None:
     agent = Agent(
         role=AgentRole.planner,
-        action=lambda so_far: ActionResult(output="first output"),
+        action=lambda so_far: ActionResult(prompt="", output="first output"),
         next=Agent(
             role=AgentRole.coder,
-            action=lambda so_far: ActionResult(output="second output", approved=False),
+            action=lambda so_far: ActionResult(prompt="", output="second output", approved=False),
         ),
     )
 
@@ -22,11 +22,11 @@ def test_all_agent_results_are_collected() -> None:
 def test_action_receives_accumulated_results_from_previous_agents() -> None:
     agent = Agent(
         role=AgentRole.planner,
-        action=lambda so_far: ActionResult(output="first output"),
+        action=lambda so_far: ActionResult(prompt="", output="first output"),
         next=Agent(
             role=AgentRole.coder,
             action=lambda so_far: ActionResult(
-                output=so_far.action_results[AgentRole.planner].output + " second output"
+                prompt="", output=so_far.action_results[AgentRole.planner].output + " second output"
             ),
         ),
     )
